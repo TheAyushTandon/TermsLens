@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TermsLens Prompt Evaluation Test Cases",
+  "description": "Standardized evaluation test suite for testing prompt performance across the 5-stage pipeline.",
+  "version": "1.0.0",
+  "schemaTemplate": {
+    "testCaseId": "Unique test case identifier (e.g., TC-ARB-001)",
+    "appName": "Application or service name (e.g., Spotify, Instagram)",
+    "documentType": "terms_of_service | privacy_policy | eula | subscription_agreement",
+    "category": "arbitration | data_retention | third_party_sharing | data_collection | unilateral_change",
+    "targetStage": "P01_CLAUSE_EXTRACTION | P02_PLAIN_LANGUAGE_EXPLANATION | P03_RISK_AND_PRIVACY_ANALYSIS | P04_EVIDENCE_VERIFICATION | P05_FINAL_REPORT_GENERATION | END_TO_END",
+    "description": "Testing objective and specific conditions probed",
+    "sourceExcerpt": "Raw verbatim policy text segment",
+    "failureModesToProbe": [
+      "unsupported_contractual_deadlines",
+      "invented_third_party_recipients",
+      "unsupported_data_collection_categories",
+      "conflating_anonymization_with_deletion",
+      "missing_mandatory_retention_unspecified_phrase",
+      "evidence_quote_mismatch"
+    ]
+  },
+  "testCases": []
+}
+

@@ -1,0 +1,749 @@
+import type {
+  DocumentAnalysis,
+  ConsumerStats,
+  UserProfile,
+  RiskLevel,
+  DocumentType,
+  DemonstrationFixture,
+  ValidationErrors,
+  AnalysisReport,
+  PipelineStage,
+  SubmitAnalysisResponse,
+  JobStatusResponse,
+  ApiError,
+  AnalysisJobState,
+} from "../types/index.ts";
+import {
+  currentUserMock,
+  consumerStatsMock,
+  emptyStatsMock,
+  mockAnalyses,
+  demonstrationFixtures,
+} from "../lib/mock-data.ts";
+import { getReportOrFallback } from "../lib/mock-reports.ts";
+
+export interface AnalysisFilters {
+  query?: string;
+  riskLevel?: RiskLevel | "all";
+  documentType?: DocumentType | "all";
+  onlyFlagged?: boolean;
+  sortBy?: "newest" | "most_flagged" | "appName";
+}
+
+export interface FileValidationResult {
+  isValid: boolean;
+  error?: string;
+  fileInfo?: {
+    name: string;
+    sizeFormatted: string;
+    extension: string;
+    lastModifiedDate: string;
+  };
+}
+
+export interface TextValidationResult {
+  isValid: boolean;
+  error?: string;
+  wordCount: number;
+  charCount: number;
+}
+
+export interface UrlValidationResult {
+  isValid: boolean;
+  error?: string;
+  parsedDomain?: string;
+}
+
+export interface SubmitAnalysisResult {
+  success: boolean;
+  isDemoFixture: boolean;
+  document?: DocumentAnalysis;
+  backendRequiredNotice?: {
+    title: string;
+    message: string;
+    payloadPreview: {
+      mode: string;
+      appName: string;
+      documentType: string;
+      inputSummary: string;
+    };
+  };
+  errors?: ValidationErrors;
+}
+
+const MAX_FILE_SIZE_BYTES = 25 * 1024 * 1024; // 25 MB
+const SUPPORTED_EXTENSIONS = [".pdf", ".docx", ".txt"];
+
+// ============================================================================
+// 1. ADAPTER ARCHITECTURE
+// ============================================================================
+
+export interface AnalysisAdapter {
+  readonly mode: "mock" | "live";
+  submitFile(file: File, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse>;
+  submitText(text: string, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse>;
+  submitUrl(url: string, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse>;
+  getJobStatus(jobId: string, signal?: AbortSignal): Promise<JobStatusResponse>;
+  cancelJob(jobId: string): Promise<boolean>;
+  getReportById(reportId: string, signal?: AbortSignal): Promise<AnalysisReport>;
+}
+
+/**
+ * Validates a report payload against the AnalysisReport interface.
+ * Ensures the frontend never crashes on malformed backend responses.
+ */
+export function validateAnalysisReport(data: unknown): {
+  isValid: boolean;
+  report?: AnalysisReport;
+  errors: string[];
+} {
+  const errors: string[] = [];
+  if (!data || typeof data !== "object") {
+    return { isValid: false, errors: ["Report response is null or not an object."] };
+  }
+
+  const raw = data as Record<string, unknown>;
+
+  if (typeof raw.id !== "string" || !raw.id.trim()) {
+    errors.push("Missing or invalid 'id' string.");
+  }
+  if (typeof raw.appName !== "string" || !raw.appName.trim()) {
+    errors.push("Missing or invalid 'appName' string.");
+  }
+  if (typeof raw.documentTitle !== "string" || !raw.documentTitle.trim()) {
+    errors.push("Missing or invalid 'documentTitle' string.");
+  }
+  if (typeof raw.documentSummary !== "string") {
+    errors.push("Missing or invalid 'documentSummary' string.");
+  }
+  if (!Array.isArray(raw.clauses)) {
+    errors.push("Missing or non-array 'clauses' property.");
+  } else {
+    for (let i = 0; i < raw.clauses.length; i++) {
+      const c = raw.clauses[i] as Record<string, any>;
+      if (!c || typeof c !== "object") {
+        errors.push(`Clause at index ${i} is not an object.`);
+        continue;
+      }
+      if (!c.id || typeof c.id !== "string") {
+        errors.push(`Clause at index ${i} is missing 'id'.`);
+      }
+      if (!c.originalClauseText || typeof c.originalClauseText !== "string") {
+        errors.push(`Clause at index ${i} is missing 'originalClauseText'.`);
+      }
+      if (!c.evidence || typeof c.evidence !== "object" || typeof c.evidence.exactQuote !== "string") {
+        errors.push(`Clause at index ${i} is missing required 'evidence.exactQuote'.`);
+      }
+      if (!c.verification || typeof c.verification !== "object") {
+        errors.push(`Clause at index ${i} is missing required 'verification' metadata.`);
+      }
+    }
+  }
+  if (!Array.isArray(raw.privacyFindings)) {
+    errors.push("Missing or non-array 'privacyFindings' property.");
+  }
+  if (!raw.executiveSummary || typeof raw.executiveSummary !== "object") {
+    errors.push("Missing or invalid 'executiveSummary' object.");
+  }
+  if (!raw.verificationSummary || typeof raw.verificationSummary !== "object") {
+    errors.push("Missing or invalid 'verificationSummary' object.");
+  }
+
+  if (errors.length > 0) {
+    return { isValid: false, errors };
+  }
+
+  return { isValid: true, report: data as AnalysisReport, errors: [] };
+}
+
+/**
+ * Demo / Mock Adapter
+ * Simulates real pipeline stage transitions and report generation
+ * without fabricating false AI claims or requiring an operational backend.
+ */
+export class MockAnalysisAdapter implements AnalysisAdapter {
+  readonly mode = "mock" as const;
+  private mockJobs = new Map<
+    string,
+    {
+      jobId: string;
+      reportId: string;
+      status: "queued" | "processing" | "completed" | "failed";
+      currentStage: PipelineStage;
+      message: string;
+      appName: string;
+      step: number;
+    }
+  >();
+
+  async submitFile(file: File, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    return this.createMockJob(appName, documentType, `Uploaded file: ${file.name}`);
+  }
+
+  async submitText(text: string, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    return this.createMockJob(appName, documentType, "Pasted text excerpt");
+  }
+
+  async submitUrl(url: string, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    return this.createMockJob(appName, documentType, `Website policy: ${url}`);
+  }
+
+  private createMockJob(appName: string, documentType: DocumentType, _summary: string): SubmitAnalysisResponse {
+    const cleanApp = appName.trim().toLowerCase().replace(/[^a-z0-9]/g, "_") || "policy";
+    const jobId = `job_demo_${cleanApp}_${Date.now()}`;
+    const reportId = `doc_demo_${cleanApp}_${Date.now()}`;
+
+    this.mockJobs.set(jobId, {
+      jobId,
+      reportId,
+      status: "processing",
+      currentStage: "PREPROCESSING",
+      message: "Preprocessing document and segmenting sections.",
+      appName,
+      step: 0,
+    });
+
+    return {
+      success: true,
+      jobId,
+      reportId,
+      status: "queued",
+      appName,
+      documentType,
+      createdAt: new Date().toISOString(),
+      currentStage: "PREPROCESSING",
+      message: "Document accepted for demonstration review.",
+      links: {
+        statusUrl: `/api/analyze/status/${jobId}`,
+        reportUrl: `/api/reports/${reportId}`,
+      },
+    };
+  }
+
+  async getJobStatus(jobId: string, signal?: AbortSignal): Promise<JobStatusResponse> {
+    if (signal?.aborted) {
+      throw new DOMException("The operation was aborted", "AbortError");
+    }
+
+    const job = this.mockJobs.get(jobId);
+    if (!job) {
+      return {
+        jobId,
+        reportId: `doc_fallback_${jobId}`,
+        status: "failed",
+        currentStage: "FAILED",
+        message: "Job identifier not found in demonstration session.",
+        error: {
+          code: "JOB_NOT_FOUND",
+          message: "The requested analysis job does not exist or has expired.",
+        },
+      };
+    }
+
+    if (job.status === "failed") {
+      return {
+        jobId: job.jobId,
+        reportId: job.reportId,
+        status: "failed",
+        currentStage: "FAILED",
+        message: job.message,
+        error: {
+          code: "CANCELLED",
+          message: job.message,
+          stage: "FAILED",
+        },
+      };
+    }
+
+    // Step progression without fabricated percentages or time promises
+    job.step += 1;
+    switch (job.step) {
+      case 1:
+        job.currentStage = "P01_CLAUSE_EXTRACTION";
+        job.message = "Extracting operative contractual clauses.";
+        break;
+      case 2:
+        job.currentStage = "P02_PLAIN_LANGUAGE_EXPLANATION";
+        job.message = "Synthesizing plain-language explanations and implications.";
+        break;
+      case 3:
+        job.currentStage = "P03_RISK_AND_PRIVACY_ANALYSIS";
+        job.message = "Evaluating consumer attention levels and privacy dimensions.";
+        break;
+      case 4:
+        job.currentStage = "P04_EVIDENCE_VERIFICATION";
+        job.message = "Auditing findings against verbatim source excerpts.";
+        break;
+      case 5:
+        job.currentStage = "P05_FINAL_REPORT_GENERATION";
+        job.message = "Synthesizing executive summary and assembling report.";
+        break;
+      case 6:
+      default:
+        job.status = "completed";
+        job.currentStage = "COMPLETED";
+        job.message = "Analysis completed successfully.";
+        break;
+    }
+
+    return {
+      jobId: job.jobId,
+      reportId: job.reportId,
+      status: job.status,
+      currentStage: job.currentStage,
+      message: job.message,
+      completedAt: job.status === "completed" ? new Date().toISOString() : undefined,
+      reportUrl: job.status === "completed" ? `/api/reports/${job.reportId}` : undefined,
+    };
+  }
+
+  async cancelJob(jobId: string): Promise<boolean> {
+    const job = this.mockJobs.get(jobId);
+    if (job) {
+      job.status = "failed";
+      job.currentStage = "FAILED";
+      job.message = "Analysis cancelled by user.";
+      return true;
+    }
+    return false;
+  }
+
+  async getReportById(reportId: string, signal?: AbortSignal): Promise<AnalysisReport> {
+    if (signal?.aborted) {
+      throw new DOMException("The operation was aborted", "AbortError");
+    }
+    return Promise.resolve(getReportOrFallback(reportId));
+  }
+}
+
+/**
+ * Live API Adapter
+ * Connects directly to backend HTTP endpoints following the finalized contract.
+ */
+export class HttpApiAnalysisAdapter implements AnalysisAdapter {
+  readonly mode = "live" as const;
+  private baseUrl: string;
+
+  constructor(baseUrl?: string) {
+    this.baseUrl =
+      baseUrl ||
+      (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_API_BASE_URL) ||
+      "/api";
+  }
+
+  async submitFile(file: File, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("appName", appName);
+    formData.append("documentType", documentType);
+
+    const res = await fetch(`${this.baseUrl}/analyze/file`, {
+      method: "POST",
+      body: formData,
+    });
+
+    return this.handleResponse<SubmitAnalysisResponse>(res);
+  }
+
+  async submitText(text: string, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    const res = await fetch(`${this.baseUrl}/analyze/text`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, appName, documentType }),
+    });
+
+    return this.handleResponse<SubmitAnalysisResponse>(res);
+  }
+
+  async submitUrl(url: string, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    const res = await fetch(`${this.baseUrl}/analyze/url`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ url, appName, documentType }),
+    });
+
+    return this.handleResponse<SubmitAnalysisResponse>(res);
+  }
+
+  async getJobStatus(jobId: string, signal?: AbortSignal): Promise<JobStatusResponse> {
+    const res = await fetch(`${this.baseUrl}/analyze/status/${encodeURIComponent(jobId)}`, {
+      method: "GET",
+      signal,
+    });
+
+    return this.handleResponse<JobStatusResponse>(res);
+  }
+
+  async cancelJob(jobId: string): Promise<boolean> {
+    try {
+      const res = await fetch(`${this.baseUrl}/analyze/cancel/${encodeURIComponent(jobId)}`, {
+        method: "POST",
+      });
+      return res.ok;
+    } catch {
+      return false;
+    }
+  }
+
+  async getReportById(reportId: string, signal?: AbortSignal): Promise<AnalysisReport> {
+    const res = await fetch(`${this.baseUrl}/reports/${encodeURIComponent(reportId)}`, {
+      method: "GET",
+      signal,
+    });
+
+    const data = await this.handleResponse<unknown>(res);
+    const validation = validateAnalysisReport(data);
+
+    if (!validation.isValid || !validation.report) {
+      throw new Error(
+        `Received malformed analysis report data from backend: ${validation.errors.join("; ")}`
+      );
+    }
+
+    return validation.report;
+  }
+
+  private async handleResponse<T>(res: Response): Promise<T> {
+    if (!res.ok) {
+      let errorData: ApiError = {
+        code: `HTTP_${res.status}`,
+        message: `Request failed with status ${res.status} (${res.statusText})`,
+      };
+
+      try {
+        const json = await res.json();
+        if (json && json.error) {
+          errorData = json.error;
+        }
+      } catch {
+        // Body was not JSON
+      }
+
+      const err: any = new Error(errorData.message);
+      err.code = errorData.code;
+      err.fieldErrors = errorData.fieldErrors;
+      err.details = errorData.details;
+      throw err;
+    }
+
+    return (await res.json()) as T;
+  }
+}
+
+// ============================================================================
+// 2. UNIFIED ANALYSIS SERVICE
+// ============================================================================
+
+const initialLiveApiEnabled =
+  typeof process !== "undefined" &&
+  process.env &&
+  process.env.NEXT_PUBLIC_ENABLE_LIVE_API === "true";
+
+let activeAdapter: AnalysisAdapter = initialLiveApiEnabled
+  ? new HttpApiAnalysisAdapter()
+  : new MockAnalysisAdapter();
+
+/**
+ * Frontend service abstraction for TermsLens.
+ * Decoupled from component rendering to enable straightforward backend API integration.
+ */
+export const analysisService = {
+  /**
+   * Adapter Configuration & Mode Switching
+   */
+  isLiveApiEnabled(): boolean {
+    return activeAdapter.mode === "live";
+  },
+
+  setLiveApiEnabled(enabled: boolean): void {
+    activeAdapter = enabled ? new HttpApiAnalysisAdapter() : new MockAnalysisAdapter();
+  },
+
+  setAdapter(adapter: AnalysisAdapter): void {
+    activeAdapter = adapter;
+  },
+
+  getActiveAdapter(): AnalysisAdapter {
+    return activeAdapter;
+  },
+
+  // ==========================================
+  // Typed API Integration Methods (Contract)
+  // ==========================================
+
+  async submitFile(file: File, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    return activeAdapter.submitFile(file, appName, documentType);
+  },
+
+  async submitText(text: string, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    return activeAdapter.submitText(text, appName, documentType);
+  },
+
+  async submitUrl(url: string, appName: string, documentType: DocumentType): Promise<SubmitAnalysisResponse> {
+    return activeAdapter.submitUrl(url, appName, documentType);
+  },
+
+  async getJobStatus(jobId: string, signal?: AbortSignal): Promise<JobStatusResponse> {
+    return activeAdapter.getJobStatus(jobId, signal);
+  },
+
+  async cancelJob(jobId: string): Promise<boolean> {
+    return activeAdapter.cancelJob(jobId);
+  },
+
+  async getReportById(reportId: string, signal?: AbortSignal): Promise<AnalysisReport> {
+    return activeAdapter.getReportById(reportId, signal);
+  },
+
+  // ==========================================
+  // Existing Dashboard Services (Preserved)
+  // ==========================================
+
+  async getCurrentUser(): Promise<UserProfile> {
+    return Promise.resolve(currentUserMock);
+  },
+
+  async getDashboardStats(isEmptyState: boolean = false): Promise<ConsumerStats> {
+    return Promise.resolve(isEmptyState ? emptyStatsMock : consumerStatsMock);
+  },
+
+  validateFile(file: File | null): FileValidationResult {
+    if (!file) {
+      return { isValid: false, error: "Please select or drop a document file." };
+    }
+
+    const name = file.name;
+    const extension = "." + name.split(".").pop()?.toLowerCase();
+
+    if (!SUPPORTED_EXTENSIONS.includes(extension)) {
+      return {
+        isValid: false,
+        error: `Unsupported file type (${extension}). Please upload a PDF, DOCX, or TXT file.`,
+      };
+    }
+
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+      return {
+        isValid: false,
+        error: `File size (${sizeMB} MB) exceeds the 25 MB maximum limit.`,
+      };
+    }
+
+    const sizeFormatted =
+      file.size >= 1024 * 1024
+        ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
+        : `${Math.round(file.size / 1024)} KB`;
+
+    return {
+      isValid: true,
+      fileInfo: {
+        name: file.name,
+        sizeFormatted,
+        extension: extension.replace(".", "").toUpperCase(),
+        lastModifiedDate: new Date(file.lastModified).toLocaleDateString(),
+      },
+    };
+  },
+
+  validateText(text: string): TextValidationResult {
+    const trimmed = text.trim();
+    const charCount = text.length;
+    const wordCount = trimmed.length === 0 ? 0 : trimmed.split(/\s+/).length;
+
+    if (trimmed.length === 0) {
+      return {
+        isValid: false,
+        error: "Please enter or paste policy text to analyze.",
+        wordCount: 0,
+        charCount: 0,
+      };
+    }
+
+    if (wordCount < 10) {
+      return {
+        isValid: false,
+        error: "Text is too short. Please paste at least one complete policy paragraph or clause.",
+        wordCount,
+        charCount,
+      };
+    }
+
+    return {
+      isValid: true,
+      wordCount,
+      charCount,
+    };
+  },
+
+  validateUrl(url: string): UrlValidationResult {
+    const trimmed = url.trim();
+    if (!trimmed) {
+      return {
+        isValid: false,
+        error: "Please enter a website link to a Terms of Service or Privacy Policy.",
+      };
+    }
+
+    try {
+      const parsed = new URL(trimmed);
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return {
+          isValid: false,
+          error: "URL must begin with http:// or https://",
+        };
+      }
+      return {
+        isValid: true,
+        parsedDomain: parsed.hostname,
+      };
+    } catch {
+      return {
+        isValid: false,
+        error: "Invalid web address format. Please enter a valid URL (e.g. https://example.com/terms).",
+      };
+    }
+  },
+
+  getDemonstrationFixture(key: "spotify" | "instagram" | "discord"): DemonstrationFixture | null {
+    return demonstrationFixtures[key] || null;
+  },
+
+  async getAnalyses(filters?: AnalysisFilters): Promise<DocumentAnalysis[]> {
+    let results = [...mockAnalyses];
+
+    if (!filters) {
+      return Promise.resolve(results);
+    }
+
+    if (filters.query && filters.query.trim().length > 0) {
+      const q = filters.query.toLowerCase().trim();
+      results = results.filter(
+        (doc) =>
+          doc.title.toLowerCase().includes(q) ||
+          doc.appName.toLowerCase().includes(q) ||
+          doc.summary.toLowerCase().includes(q)
+      );
+    }
+
+    if (filters.riskLevel && filters.riskLevel !== "all") {
+      results = results.filter((doc) => doc.riskLevel === filters.riskLevel);
+    }
+
+    if (filters.documentType && filters.documentType !== "all") {
+      results = results.filter((doc) => doc.documentType === filters.documentType);
+    }
+
+    if (filters.onlyFlagged) {
+      results = results.filter((doc) => doc.flaggedClausesCount > 0);
+    }
+
+    if (filters.sortBy) {
+      switch (filters.sortBy) {
+        case "most_flagged":
+          results.sort((a, b) => b.flaggedClausesCount - a.flaggedClausesCount);
+          break;
+        case "appName":
+          results.sort((a, b) => a.appName.localeCompare(b.appName));
+          break;
+        case "newest":
+        default:
+          results.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          break;
+      }
+    }
+
+    return Promise.resolve(results);
+  },
+
+  /**
+   * Handles submission of analysis requests without fabricating fake AI results.
+   */
+  async processAnalysisRequest(payload: {
+    mode: "file" | "text" | "url";
+    appName: string;
+    documentType: DocumentType;
+    file?: File | null;
+    text?: string;
+    url?: string;
+    isDemoFixture?: boolean;
+    demoKey?: "spotify" | "instagram" | "discord";
+  }): Promise<SubmitAnalysisResult> {
+    const errors: ValidationErrors = {};
+
+    // Validate App or Service Name
+    if (!payload.appName.trim()) {
+      errors.appName = "Please provide the app or service name.";
+    }
+
+    // Validate Mode-specific inputs
+    if (payload.mode === "file") {
+      const fileValidation = this.validateFile(payload.file || null);
+      if (!fileValidation.isValid) {
+        errors.file = fileValidation.error;
+      }
+    } else if (payload.mode === "text") {
+      const textValidation = this.validateText(payload.text || "");
+      if (!textValidation.isValid) {
+        errors.text = textValidation.error;
+      }
+    } else if (payload.mode === "url") {
+      const urlValidation = this.validateUrl(payload.url || "");
+      if (!urlValidation.isValid) {
+        errors.url = urlValidation.error;
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return {
+        success: false,
+        isDemoFixture: false,
+        errors,
+      };
+    }
+
+    // If this is a demonstration fixture selection, return the preanalyzed report with a unique instance id
+    if (payload.isDemoFixture && payload.demoKey) {
+      const fixture = this.getDemonstrationFixture(payload.demoKey);
+      if (fixture) {
+        return {
+          success: true,
+          isDemoFixture: true,
+          document: {
+            ...fixture.preanalyzedReport,
+            id: `${fixture.preanalyzedReport.id}_${Date.now()}`,
+            createdAt: new Date().toISOString(),
+          },
+        };
+      }
+    }
+
+    // For user-uploaded custom files, text, or URLs where no live backend endpoint is active:
+    // We return an honest integration notice rather than fabricating fake AI output.
+    const inputSummary =
+      payload.mode === "file"
+        ? `File: ${payload.file?.name} (${Math.round((payload.file?.size || 0) / 1024)} KB)`
+        : payload.mode === "text"
+        ? `Raw Text: ${payload.text?.length} chars (${payload.text?.trim().split(/\s+/).length} words)`
+        : `Website URL: ${payload.url}`;
+
+    return {
+      success: true,
+      isDemoFixture: false,
+      backendRequiredNotice: {
+        title: "Input Validated & Ready for Backend Analysis",
+        message:
+          "Your document configuration and payload have been validated. In this demonstration environment, a live backend LLM endpoint (POST /api/analyze) is required to process non-sample files. You can explore the functional demonstration records (Spotify, Instagram, Discord) below to see full analysis output.",
+        payloadPreview: {
+          mode: payload.mode,
+          appName: payload.appName.trim(),
+          documentType: payload.documentType,
+          inputSummary,
+        },
+      },
+    };
+  },
+};

@@ -1,0 +1,26 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "TermsLens Expected Ground-Truth Outputs",
+  "description": "Golden ground-truth reference benchmarks for test cases defined in test-cases.json.",
+  "version": "1.0.0",
+  "schemaTemplate": {
+    "testCaseId": "Reference identifier matching testCaseId in test-cases.json",
+    "targetStage": "P01_CLAUSE_EXTRACTION | P02_PLAIN_LANGUAGE_EXPLANATION | P03_RISK_AND_PRIVACY_ANALYSIS | P04_EVIDENCE_VERIFICATION | P05_FINAL_REPORT_GENERATION",
+    "expectedCriteria": {
+      "verbatimQuoteRequired": "Exact verbatim excerpt that must be present in evidence.exactQuote",
+      "expectedAttentionLevel": "high | moderate | informational",
+      "mandatoryPhrasing": [
+        "Phrasing required when information is unstated (e.g., 'contains no mention of an opt-out window')"
+      ],
+      "forbiddenAssertions": [
+        "Specific unevidenced claims that must not be generated (e.g., 30-day deadlines, unmentioned data brokers)"
+      ],
+      "requiredKeyPoints": [
+        "Core plain-language explanations that must be communicated to the consumer"
+      ],
+      "expectedVerificationStatus": "verified | unverified | rejected"
+    }
+  },
+  "benchmarks": []
+}
+
