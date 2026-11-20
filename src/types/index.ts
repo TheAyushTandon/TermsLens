@@ -36,6 +36,43 @@ export interface P01_Result {
   error?: string;
 }
 
+export interface ClauseExplanation {
+  tempClauseId: string;
+  title: string;
+  shortExplanation: string;
+  plainLanguageExplanation: string;
+  whyThisClauseMatters: string;
+  potentialUserImplications: string[];
+  actionableAdvice?: string;
+}
+
+export interface P02_Output {
+  clauseExplanations: ClauseExplanation[];
+}
+
+export interface P02_ExecutionMeta {
+  model: string;
+  promptVersion: "v1" | "v2" | "v3";
+  durationMs: number;
+  clausesProcessed: number;
+}
+
+export interface P02_Result {
+  success: boolean;
+  data?: P02_Output;
+  metadata?: P02_ExecutionMeta;
+  error?: string;
+}
+
+export interface P01_P02_CombinedOutput {
+  p01: P01_Output;
+  p02: P02_Output;
+  combinedClauses: Array<{
+    clause: ExtractedClause;
+    explanation: ClauseExplanation;
+  }>;
+}
+
 export type DocumentType =
   | "terms_of_service"
   | "privacy_policy"
