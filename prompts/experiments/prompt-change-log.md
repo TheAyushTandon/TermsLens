@@ -16,6 +16,9 @@ This document tracks all prompt iterations, comparative modifications, and hypot
 | LOG-2026-P01-001 | 2026-11-20 | P01_CLAUSE_EXTRACTION | v1 (Baseline) | Establish zero-shot baseline for contractual clause extraction | Evaluated | Extracted clauses, but exhibited ~25% paraphrasing instead of verbatim source quotes. |
 | LOG-2026-P01-002 | 2026-11-20 | P01_CLAUSE_EXTRACTION | v2 (Role & Constraints) | Role-based legal persona with strict verbatim & null metadata constraints | Evaluated | Improved verbatim quotation fidelity to 92%; prevented invented headings/page numbers. |
 | LOG-2026-P01-003 | 2026-11-20 | P01_CLAUSE_EXTRACTION | v3 (Few-Shot & Schema) | Few-shot examples + adversarial grounding + untrusted content tagging | Approved | Achieved 100% verbatim grounding; zero hallucinated opt-out deadlines or brokers; compliant JSON. |
+| LOG-2026-P03-001 | 2026-11-20 | P03_RISK_AND_PRIVACY_ANALYSIS | v1 (Baseline) | Establish zero-shot risk and six-topic privacy classification baseline | Preserved; not benchmarked | Baseline prompt saved for later comparative evaluation. |
+| LOG-2026-P03-002 | 2026-11-20 | P03_RISK_AND_PRIVACY_ANALYSIS | v2 (Role & Constraints) | Define attention criteria, privacy distinctions, source grounding, and scope-limited silence | Preserved; not benchmarked | Refined prompt saved for later comparative evaluation. |
+| LOG-2026-P03-003 | 2026-11-20 | P03_RISK_AND_PRIVACY_ANALYSIS | v3 (Few-Shot & Schema) | Add labeled examples, strict JSON output, exact evidence, and injection safeguards | Live integration passed | One synthetic Gemini run returned 3 validated clause classifications and all 6 privacy topics; exact source evidence validation passed. |
 
 ---
 

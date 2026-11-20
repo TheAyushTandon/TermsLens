@@ -64,6 +64,33 @@ export interface P02_Result {
   error?: string;
 }
 
+export type P03PromptVersion = "v1" | "v2" | "v3";
+
+export interface P03ClauseClassification {
+  tempClauseId: string;
+  category: ClauseCategory;
+  attentionLevel: AttentionLevel;
+}
+
+export interface P03_Output {
+  clauseClassifications: P03ClauseClassification[];
+  privacyFindings: PrivacyFinding[];
+}
+
+export interface P03_ExecutionMeta {
+  model: string;
+  promptVersion: P03PromptVersion;
+  durationMs: number;
+  clausesProcessed: number;
+}
+
+export interface P03_Result {
+  success: boolean;
+  data?: P03_Output;
+  metadata?: P03_ExecutionMeta;
+  error?: string;
+}
+
 export interface P01_P02_CombinedOutput {
   p01: P01_Output;
   p02: P02_Output;
