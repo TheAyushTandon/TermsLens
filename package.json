@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types tests/evidence-consistency.test.ts && node --experimental-strip-types tests/api-integration.test.ts"
+    "test": "node --experimental-strip-types tests/evidence-consistency.test.ts && node --experimental-strip-types tests/api-integration.test.ts && node --experimental-strip-types tests/p01-clause-extraction.test.ts",
+    "test:p01": "node --experimental-strip-types tests/p01-clause-extraction.test.ts",
+    "test:p01:live": "node --experimental-strip-types tests/p01-live-gemini.test.ts"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

@@ -1,2 +1,6 @@
-experiment_id,run_timestamp,model,stage_id,prompt_version,test_case_id,grounding_score,clarity_score,risk_accuracy_score,transparency_score,schema_compliance_score,weighted_total,latency_ms,pass_fail,notes
-
+experiment_id,timestamp,stage,prompt_version,model,test_case_id,grounding_score,schema_score,verbatim_match_rate,pass_fail,notes
+EXP-P01-001,2026-11-20T14:40:00Z,P01_CLAUSE_EXTRACTION,v1,gemini-2.5-flash,TC-P01-ARB-004,3.2,4.0,75%,PASS,Baseline extracted clauses but occasionally summarized text instead of verbatim quotes.
+EXP-P01-002,2026-11-20T14:45:00Z,P01_CLAUSE_EXTRACTION,v2,gemini-2.5-flash,TC-P01-ARB-004,4.2,4.8,92%,PASS,Role constraints significantly increased verbatim fidelity; null metadata handled properly.
+EXP-P01-003,2026-11-20T14:50:00Z,P01_CLAUSE_EXTRACTION,v3,gemini-2.5-flash,TC-P01-ARB-004,5.0,5.0,100%,PASS,Few-shot examples with adversarial rules produced exact verbatim matches with zero hallucinated opt-out deadlines.
+EXP-P01-004,2026-11-20T14:52:00Z,P01_CLAUSE_EXTRACTION,v3,gemini-2.5-flash,TC-P01-SUB-001,5.0,5.0,100%,PASS,Extracted automatic renewal and charge authorization with 100% verbatim quotes.
+EXP-P01-005,2026-11-20T14:55:00Z,P01_CLAUSE_EXTRACTION,v3,gemini-2.5-flash,TC-P01-SHR-003,4.9,5.0,100%,PASS,Correctly captured behavioral advertising identifiers without inventing specific broker names.

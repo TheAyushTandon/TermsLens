@@ -1,3 +1,41 @@
+export interface DocumentSegment {
+  segmentIndex: number;
+  sectionHeading: string;
+  sectionNumber?: string;
+  sourcePage?: number;
+  rawText: string;
+}
+
+export interface ExtractedClause {
+  tempClauseId: string;
+  segmentIndex: number;
+  sectionHeading: string;
+  sectionNumber?: string;
+  sourcePage?: number;
+  originalClauseText: string;
+  operativeSummary: string;
+}
+
+export interface P01_Output {
+  extractedClauses: ExtractedClause[];
+  totalClausesAnalyzed: number;
+}
+
+export interface P01_ExecutionMeta {
+  model: string;
+  promptVersion: "v1" | "v2" | "v3";
+  durationMs: number;
+  segmentsProcessed: number;
+  verbatimVerificationRate: number; // 0 to 1
+}
+
+export interface P01_Result {
+  success: boolean;
+  data?: P01_Output;
+  metadata?: P01_ExecutionMeta;
+  error?: string;
+}
+
 export type DocumentType =
   | "terms_of_service"
   | "privacy_policy"

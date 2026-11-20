@@ -20,6 +20,56 @@
       "evidence_quote_mismatch"
     ]
   },
-  "testCases": []
+  "testCases": [
+    {
+      "testCaseId": "TC-P01-SUB-001",
+      "appName": "TermsLens Premium",
+      "documentType": "terms_of_service",
+      "category": "subscription_billing",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "description": "Probes automatic subscription renewal and recurring charge authorization extraction.",
+      "sourceExcerpt": "Your TermsLens Premium subscription will automatically renew at the end of each billing cycle unless you cancel it before the renewal date. By subscribing, you authorize us to charge your designated payment method recurring monthly fees.",
+      "failureModesToProbe": ["unsupported_contractual_deadlines", "evidence_quote_mismatch"]
+    },
+    {
+      "testCaseId": "TC-P01-REF-002",
+      "appName": "TermsLens Premium",
+      "documentType": "terms_of_service",
+      "category": "cancellation_refunds",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "description": "Probes strict non-refundable fee clause and absence of prorated refunds.",
+      "sourceExcerpt": "All subscription payments are strictly non-refundable and no prorated refunds or credits are issued for partially used months.",
+      "failureModesToProbe": ["unsupported_contractual_deadlines", "evidence_quote_mismatch"]
+    },
+    {
+      "testCaseId": "TC-P01-SHR-003",
+      "appName": "TermsLens Social",
+      "documentType": "privacy_policy",
+      "category": "third_party_sharing",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "description": "Probes cross-context behavioral ad targeting and pseudonymous identifier sharing.",
+      "sourceExcerpt": "We do not sell your personal identifying information to data brokers. However, we may share pseudonymous browsing metrics, unique mobile advertising identifiers, and aggregated interaction logs with our third-party advertising partners for cross-context behavioral targeting.",
+      "failureModesToProbe": ["invented_third_party_recipients", "evidence_quote_mismatch"]
+    },
+    {
+      "testCaseId": "TC-P01-ARB-004",
+      "appName": "TermsLens Platform",
+      "documentType": "terms_of_service",
+      "category": "dispute_resolution",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "description": "Probes mandatory individual binding arbitration and class action waiver extraction without hallucinated opt-out deadlines.",
+      "sourceExcerpt": "Any dispute, controversy, or claim arising out of or relating to this agreement shall be settled exclusively by confidential, binding arbitration administered by the American Arbitration Association under its Commercial Arbitration Rules. You expressly waive your constitutional right to a jury trial and agree that you may only bring claims against us in your individual capacity, and not as a plaintiff or class member in any class or representative proceeding.",
+      "failureModesToProbe": ["unsupported_contractual_deadlines", "evidence_quote_mismatch"]
+    },
+    {
+      "testCaseId": "TC-P01-TRM-005",
+      "appName": "TermsLens Cloud",
+      "documentType": "terms_of_service",
+      "category": "account_termination",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "description": "Probes immediate account termination without notice and immediate content deletion.",
+      "sourceExcerpt": "We reserve the right to suspend or terminate your account and access to the Service at any time, immediately and without prior notice or liability, for any reason, including without limitation if you breach the Terms. Upon termination, your right to use the Service will cease immediately.",
+      "failureModesToProbe": ["unsupported_contractual_deadlines", "evidence_quote_mismatch"]
+    }
+  ]
 }
-

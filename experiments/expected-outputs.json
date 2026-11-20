@@ -21,6 +21,80 @@
       "expectedVerificationStatus": "verified | unverified | rejected"
     }
   },
-  "benchmarks": []
+  "benchmarks": [
+    {
+      "testCaseId": "TC-P01-SUB-001",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "expectedCriteria": {
+        "verbatimQuoteRequired": "Your TermsLens Premium subscription will automatically renew at the end of each billing cycle unless you cancel it before the renewal date. By subscribing, you authorize us to charge your designated payment method recurring monthly fees.",
+        "expectedAttentionLevel": "moderate",
+        "mandatoryPhrasing": [],
+        "forbiddenAssertions": ["30-day cancellation deadline", "annual renewal terms"],
+        "requiredKeyPoints": [
+          "Automatic subscription renewal at the end of each billing cycle",
+          "Authorization of recurring charges on user's payment method"
+        ],
+        "expectedVerificationStatus": "verified"
+      }
+    },
+    {
+      "testCaseId": "TC-P01-REF-002",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "expectedCriteria": {
+        "verbatimQuoteRequired": "All subscription payments are strictly non-refundable and no prorated refunds or credits are issued for partially used months.",
+        "expectedAttentionLevel": "high",
+        "mandatoryPhrasing": [],
+        "forbiddenAssertions": ["14-day refund window", "statutory cooling off period"],
+        "requiredKeyPoints": [
+          "Subscription payments are strictly non-refundable",
+          "No prorated refunds or credits for partial months"
+        ],
+        "expectedVerificationStatus": "verified"
+      }
+    },
+    {
+      "testCaseId": "TC-P01-SHR-003",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "expectedCriteria": {
+        "verbatimQuoteRequired": "We do not sell your personal identifying information to data brokers. However, we may share pseudonymous browsing metrics, unique mobile advertising identifiers, and aggregated interaction logs with our third-party advertising partners for cross-context behavioral targeting.",
+        "expectedAttentionLevel": "high",
+        "mandatoryPhrasing": [],
+        "forbiddenAssertions": ["Acxiom", "Experian", "selling biometric data"],
+        "requiredKeyPoints": [
+          "Shares pseudonymous browsing metrics and ad identifiers with third-party ad partners",
+          "Used for cross-context behavioral targeting"
+        ],
+        "expectedVerificationStatus": "verified"
+      }
+    },
+    {
+      "testCaseId": "TC-P01-ARB-004",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "expectedCriteria": {
+        "verbatimQuoteRequired": "Any dispute, controversy, or claim arising out of or relating to this agreement shall be settled exclusively by confidential, binding arbitration administered by the American Arbitration Association under its Commercial Arbitration Rules. You expressly waive your constitutional right to a jury trial and agree that you may only bring claims against us in your individual capacity, and not as a plaintiff or class member in any class or representative proceeding.",
+        "expectedAttentionLevel": "high",
+        "mandatoryPhrasing": [],
+        "forbiddenAssertions": ["30-day opt-out window", "mailing address for opting out", "JAMS rules"],
+        "requiredKeyPoints": [
+          "Mandatory binding arbitration under AAA rules",
+          "Express waiver of right to jury trial and class action proceedings"
+        ],
+        "expectedVerificationStatus": "verified"
+      }
+    },
+    {
+      "testCaseId": "TC-P01-TRM-005",
+      "targetStage": "P01_CLAUSE_EXTRACTION",
+      "expectedCriteria": {
+        "verbatimQuoteRequired": "We reserve the right to suspend or terminate your account and access to the Service at any time, immediately and without prior notice or liability, for any reason, including without limitation if you breach the Terms.",
+        "expectedAttentionLevel": "high",
+        "mandatoryPhrasing": [],
+        "forbiddenAssertions": ["30 days written notice", "appeal mechanism"],
+        "requiredKeyPoints": [
+          "Right to terminate account immediately without prior notice or liability"
+        ],
+        "expectedVerificationStatus": "verified"
+      }
+    }
+  ]
 }
-
