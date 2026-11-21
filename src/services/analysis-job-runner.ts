@@ -88,8 +88,9 @@ export async function executeTextAnalysisJob(params: {
   text: string;
   appName: string;
   documentType: DocumentType;
+  documentTitle?: string;
 }): Promise<void> {
-  const { jobId, reportId, text, appName, documentType } = params;
+  const { jobId, reportId, text, appName, documentType, documentTitle } = params;
 
   // 1. Transition to PREPROCESSING
   const initialJob = jobStore.get(jobId);
@@ -116,7 +117,7 @@ export async function executeTextAnalysisJob(params: {
         rawText: text,
         appName,
         documentType,
-        documentTitle: `${appName} Terms of Service`,
+        documentTitle: documentTitle || `${appName} Terms of Service`,
       },
       {
         reportId,
