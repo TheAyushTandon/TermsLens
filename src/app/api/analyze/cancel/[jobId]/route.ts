@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { jobStore } from "@/lib/job-store";
+import { NextResponse } from "next/server.js";
+import { jobStore } from "../../../../../lib/job-store.ts";
 
 export async function POST(
   _request: Request,
-  context: { params: Promise<{ jobId: string }> | { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
   try {
     const params = await context.params;
@@ -23,13 +23,18 @@ export async function POST(
     }
 
     const cleanJobId = decodeURIComponent(jobId.trim());
-    const job = jobStore.get(cleanJobId);
+    const job = await jobStore.get(cleanJobId);
 
     if (job) {
-      job.status = "failed";
-      job.currentStage = "FAILED";
+      job.status = "cancelled";
+      job.currentStage = "CANCELLED";
       job.message = "Analysis cancelled by user.";
-      jobStore.set(cleanJobId, job);
+      job.error = {
+        code: "CANCELLED",
+        message: "Analysis cancelled by user.",
+        stage: "CANCELLED",
+      };
+      await jobStore.set(cleanJobId, job);
     }
 
     return NextResponse.json(

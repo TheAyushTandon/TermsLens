@@ -31,9 +31,10 @@ export interface UseAnalysisJobReturn {
  * Does not fabricate progress percentages.
  */
 function mapStageToJobState(stage: PipelineStage, status: AnalysisStatus): AnalysisJobState {
-  if (status === "failed") return "failed";
-  if (status === "completed") return "completed";
-  if (status === "queued") return "queued";
+  if (status === "cancelled" || stage === "CANCELLED") return "cancelled";
+  if (status === "failed" || stage === "FAILED") return "failed";
+  if (status === "completed" || stage === "COMPLETED") return "completed";
+  if (status === "queued" || stage === "QUEUED") return "queued";
 
   switch (stage) {
     case "PREPROCESSING":
@@ -48,10 +49,6 @@ function mapStageToJobState(stage: PipelineStage, status: AnalysisStatus): Analy
       return "p04_evidence_verification";
     case "P05_FINAL_REPORT_GENERATION":
       return "p05_final_report_generation";
-    case "COMPLETED":
-      return "completed";
-    case "FAILED":
-      return "failed";
     default:
       return "preprocessing";
   }

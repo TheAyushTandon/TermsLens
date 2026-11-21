@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { jobStore } from "@/lib/job-store";
+import { NextResponse } from "next/server.js";
+import { jobStore } from "../../../../../lib/job-store.ts";
 
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ jobId: string }> | { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
   try {
     const params = await context.params;
@@ -23,7 +23,7 @@ export async function GET(
     }
 
     const cleanJobId = decodeURIComponent(jobId.trim());
-    const job = jobStore.get(cleanJobId);
+    const job = await jobStore.get(cleanJobId);
 
     if (!job) {
       return NextResponse.json(

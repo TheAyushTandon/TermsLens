@@ -21,7 +21,7 @@ import {
   demonstrationFixtures,
 } from "../lib/mock-data.ts";
 import { getReportOrFallback } from "../lib/mock-reports.ts";
-import { reportStore } from "../lib/report-store.ts";
+import { clientReportStore as reportStore } from "../lib/in-memory-report-store.ts";
 import { segmentPolicyText } from "../lib/segmentation.ts";
 import type {
   Clause,

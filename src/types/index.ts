@@ -149,7 +149,7 @@ export type DocumentType =
   | "subscription_agreement"
   | "other";
 
-export type AnalysisStatus = "completed" | "processing" | "failed" | "queued";
+export type AnalysisStatus = "completed" | "processing" | "failed" | "queued" | "cancelled";
 
 export type RiskLevel = "high" | "medium" | "low" | "safe";
 
@@ -368,6 +368,7 @@ export interface ValidationErrors {
 // ==========================================
 
 export type PipelineStage =
+  | "QUEUED"
   | "PREPROCESSING"
   | "P01_CLAUSE_EXTRACTION"
   | "P02_PLAIN_LANGUAGE_EXPLANATION"
@@ -375,7 +376,8 @@ export type PipelineStage =
   | "P04_EVIDENCE_VERIFICATION"
   | "P05_FINAL_REPORT_GENERATION"
   | "COMPLETED"
-  | "FAILED";
+  | "FAILED"
+  | "CANCELLED";
 
 export type AnalysisJobState =
   | "idle"
