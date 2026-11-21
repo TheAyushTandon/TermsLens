@@ -6,6 +6,7 @@ import type {
   ClauseCategory,
   VerificationStatus,
   PrivacyFinding,
+  PrivacyTopic,
   ExecutiveSummary,
   VerificationSummary,
   AnalysisReport,
@@ -22,8 +23,15 @@ import {
 import { validateAnalysisReport } from "./analysis-service.ts";
 import { extractClausesP01, type P01ExtractionOptions } from "./p01-clause-extraction.ts";
 import { explainClausesP02, type P02ExplanationOptions } from "./p02-plain-language-explanation.ts";
+import { analyzeP03, type P03AnalysisOptions } from "./p03-risk-privacy-analysis.ts";
+import {
+  verifyEvidenceP04,
+  type P04VerificationOptions,
+  type P04AuditItem,
+} from "./p04-evidence-verification.ts";
 import { segmentPolicyText, verifyClauseVerbatim } from "../lib/segmentation.ts";
 import { reportStore } from "../lib/report-store.ts";
+import type { ClauseExplanation } from "../types/index.ts";
 
 export type P05PromptVersion = "v1" | "v2" | "v3";
 
@@ -349,6 +357,78 @@ export function formatSourceReferenceText(
 }
 
 /**
+ * Normalizes any attention level string into the frontend-supported values:
+ * "high" | "moderate" | "informational".
+ */
+export function mapAttentionLevel(raw: unknown): AttentionLevel {
+  if (typeof raw !== "string") return "informational";
+  const normalized = raw.toLowerCase().trim();
+  if (normalized === "high" || normalized === "critical" || normalized === "danger") return "high";
+  if (normalized === "moderate" || normalized === "medium" || normalized === "caution" || normalized === "warning") {
+    return "moderate";
+  }
+  return "informational";
+}
+
+const VALID_CLAUSE_CATEGORIES: Set<ClauseCategory> = new Set([
+  "data_collection",
+  "data_sharing",
+  "data_retention",
+  "subscription_billing",
+  "cancellation_refunds",
+  "intellectual_property",
+  "dispute_resolution",
+  "liability_indemnification",
+  "account_termination",
+  "other",
+]);
+
+/**
+ * Normalizes clause categories, falling back to "other".
+ */
+export function mapClauseCategory(raw: unknown): ClauseCategory {
+  if (typeof raw === "string" && VALID_CLAUSE_CATEGORIES.has(raw as ClauseCategory)) {
+    return raw as ClauseCategory;
+  }
+  return "other";
+}
+
+export const EXPECTED_PRIVACY_TOPICS: { topic: PrivacyTopic; topicTitle: string; defaultSilence: string }[] = [
+  {
+    topic: "personal_info_collected",
+    topicTitle: "Personal Information Collected",
+    defaultSilence: "The provided excerpt is silent regarding specific personal categories collected beyond account registration.",
+  },
+  {
+    topic: "third_party_sharing",
+    topicTitle: "Third-Party Data Sharing",
+    defaultSilence: "The provided excerpt is silent regarding third-party data broker sharing.",
+  },
+  {
+    topic: "advertising_tracking",
+    topicTitle: "Advertising and Behavioral Tracking",
+    defaultSilence: "The provided excerpt is silent regarding cross-app behavioral tracking.",
+  },
+  {
+    topic: "data_retention",
+    topicTitle: "Data Retention Period",
+    defaultSilence:
+      "Important: Silence in this policy does not imply data is deleted immediately. Do not infer indefinite retention as an established fact, nor assume silence indicates data is immediately purged.",
+  },
+  {
+    topic: "account_deletion",
+    topicTitle: "Account Deletion Rights",
+    defaultSilence: "The provided excerpt does not specify user account deletion procedures.",
+  },
+  {
+    topic: "ai_model_training",
+    topicTitle: "AI & Model Training Usage",
+    defaultSilence:
+      "The agreement is silent regarding whether user data is used to train proprietary artificial intelligence or machine learning foundation models.",
+  },
+];
+
+/**
  * Deterministically merges validated upstream outputs (P01..P04) with LLM-synthesized
  * executive summary into the complete, authoritative AnalysisReport payload.
  */
@@ -391,12 +471,15 @@ export function assembleAnalysisReport(params: {
     const verificationStatus: VerificationStatus = isRejected ? "rejected" : ver?.verification?.status || "unverified";
     const evidenceMatchesOriginal = isRejected ? false : (ver?.verification?.evidenceMatchesOriginal ?? true);
 
+    const attentionLevel = mapAttentionLevel(cls?.attentionLevel);
+    const category = mapClauseCategory(cls?.category);
+
     return {
       id: clauseId,
       title: exp?.title || `Contract Clause ${idx + 1}`,
       shortExplanation: exp?.shortExplanation || "",
-      category: cls?.category || "other",
-      attentionLevel: cls?.attentionLevel || "informational",
+      category,
+      attentionLevel,
       originalClauseText: extracted.originalClauseText,
       evidence: {
         id: `ev_${clauseId}`,
@@ -411,8 +494,8 @@ export function assembleAnalysisReport(params: {
         plainLanguageExplanation: exp?.plainLanguageExplanation || "",
         whyThisClauseMatters: exp?.whyThisClauseMatters || "",
         potentialUserImplications: exp?.potentialUserImplications || [],
-        attentionLevel: cls?.attentionLevel || "informational",
-        category: cls?.category || "other",
+        attentionLevel,
+        category,
         actionableAdvice: exp?.actionableAdvice,
       },
       verification: {
@@ -459,6 +542,57 @@ export function assembleAnalysisReport(params: {
       "All findings were audited through automated semantic verification against verbatim excerpts from the provided document.",
   };
 
+  // Map and normalize privacy findings to ensure all 6 expected categories exist with valid attention levels
+  const privacyFindingsMap = new Map<PrivacyTopic, PrivacyFinding>();
+  if (Array.isArray(p03.privacyFindings)) {
+    for (const pf of p03.privacyFindings) {
+      let mappedTopic: PrivacyTopic = pf.topic;
+      const topicStr = String(pf.topic || "").toLowerCase().trim();
+      if (topicStr === "personal_info_collected" || topicStr === "data_collection" || topicStr === "personal_data") {
+        mappedTopic = "personal_info_collected";
+      } else if (topicStr === "third_party_sharing" || topicStr === "data_sharing" || topicStr === "sharing") {
+        mappedTopic = "third_party_sharing";
+      } else if (topicStr === "advertising_tracking" || topicStr === "tracking" || topicStr === "advertising") {
+        mappedTopic = "advertising_tracking";
+      } else if (topicStr === "data_retention" || topicStr === "retention") {
+        mappedTopic = "data_retention";
+      } else if (topicStr === "account_deletion" || topicStr === "deletion" || topicStr === "user_rights") {
+        mappedTopic = "account_deletion";
+      } else if (topicStr === "ai_model_training" || topicStr === "ai_training" || topicStr === "ai_models") {
+        mappedTopic = "ai_model_training";
+      }
+
+      privacyFindingsMap.set(mappedTopic, {
+        ...pf,
+        topic: mappedTopic,
+        attentionLevel: mapAttentionLevel(pf.attentionLevel),
+      });
+    }
+  }
+
+  const mappedPrivacyFindings: PrivacyFinding[] = EXPECTED_PRIVACY_TOPICS.map((spec, index) => {
+    const existing = privacyFindingsMap.get(spec.topic);
+    if (existing) {
+      return {
+        ...existing,
+        topicTitle: existing.topicTitle || spec.topicTitle,
+        silenceNotice:
+          existing.distinction === "not_specified" && !existing.silenceNotice
+            ? spec.defaultSilence
+            : existing.silenceNotice,
+      };
+    }
+    return {
+      id: `priv_item_${index + 1}`,
+      topic: spec.topic,
+      topicTitle: spec.topicTitle,
+      distinction: "not_specified",
+      summary: spec.defaultSilence,
+      silenceNotice: spec.defaultSilence,
+      attentionLevel: spec.topic === "data_retention" ? "high" : "moderate",
+    };
+  });
+
   const cleanApp = appName.trim().toLowerCase().replace(/[^a-z0-9]/g, "_") || "document";
   const reportId = params.reportId || `doc_live_${cleanApp}_${Date.now()}`;
   const documentTitle = params.documentTitle || `${appName} Terms of Service`;
@@ -480,7 +614,7 @@ export function assembleAnalysisReport(params: {
     informationalCount,
     executiveSummary: synthesis.executiveSummary,
     clauses: assembledClauses,
-    privacyFindings: p03.privacyFindings,
+    privacyFindings: mappedPrivacyFindings,
     verificationSummary,
   };
 }
@@ -608,14 +742,9 @@ export async function generateReportP05(
 }
 
 /**
- * BLOCKER NOTICE:
- * Stages P03 (Risk & Privacy Analysis) and P04 (Independent Evidence Verification)
- * are currently unavailable as standalone LLM prompt modules in the repository.
- *
- * To bridge functioning stages P01 and P02 to P05 without creating fake LLM implementations,
- * this function derives contract-grounded P03 classifications, six mandatory privacy findings,
- * and P04 verbatim evidence verification using deterministic rules conforming to the repository contract
- * and tests/evidence-consistency.test.ts.
+ * @deprecated Legacy deterministic bridge from P01/P02 to P03/P04.
+ * Production pipeline executes real analyzeP03 and verifyEvidenceP04 stages.
+ * Retained strictly for backward compatibility with isolated unit tests and fixtures.
  */
 export function deriveContractGroundingFromP01P02(
   p01: P01_Output,
@@ -777,10 +906,20 @@ export function deriveContractGroundingFromP01P02(
   };
 }
 
+export interface FullPipelineOptions {
+  p01Options?: P01ExtractionOptions;
+  p02Options?: P02ExplanationOptions;
+  p03Options?: P03AnalysisOptions;
+  p04Options?: P04VerificationOptions;
+  p05Options?: P05GenerationOptions;
+  onStageTransition?: (stage: string, progress: number) => void;
+}
+
 /**
  * End-to-End Pipeline Execution:
  * Policy Input -> P01 (Clause Extraction) -> P02 (Plain-Language Explanation)
- * -> P03/P04 (Contract-Grounded Verification Bridge) -> P05 (Final Report Generation) -> Final Report.
+ * -> P03 (Risk & Privacy Analysis) -> P04 (Evidence Verification)
+ * -> P05 (Final Report Generation) -> Final Report.
  */
 export async function runFullPolicyAnalysisPipeline(
   input: {
@@ -789,11 +928,7 @@ export async function runFullPolicyAnalysisPipeline(
     documentType: DocumentType;
     documentTitle?: string;
   },
-  options?: {
-    p01Options?: P01ExtractionOptions;
-    p02Options?: P02ExplanationOptions;
-    p05Options?: P05GenerationOptions;
-  }
+  options?: FullPipelineOptions
 ): Promise<{
   success: boolean;
   data?: AnalysisReport;
@@ -803,6 +938,7 @@ export async function runFullPolicyAnalysisPipeline(
   const stagesCompleted: string[] = [];
 
   // Stage 1: P01 Clause Extraction
+  options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 10);
   const p01Result = await extractClausesP01(
     {
       rawText: input.rawText,
@@ -815,13 +951,15 @@ export async function runFullPolicyAnalysisPipeline(
   if (!p01Result.success || !p01Result.data) {
     return {
       success: false,
-      error: `Pipeline failed at stage P01: ${p01Result.error}`,
+      error: `Pipeline failed at stage P01: ${p01Result.error || "Clause extraction failed."}`,
       stagesCompleted,
     };
   }
   stagesCompleted.push("P01_CLAUSE_EXTRACTION");
+  options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 25);
 
   // Stage 2: P02 Plain-Language Explanation
+  options?.onStageTransition?.("P02_EXPLANATION", 30);
   const p02Result = await explainClausesP02(
     {
       p01Output: p01Result.data,
@@ -834,28 +972,85 @@ export async function runFullPolicyAnalysisPipeline(
   if (!p02Result.success || !p02Result.data) {
     return {
       success: false,
-      error: `Pipeline failed at stage P02: ${p02Result.error}`,
+      error: `Pipeline failed at stage P02: ${p02Result.error || "Plain-language explanation failed."}`,
       stagesCompleted,
     };
   }
   stagesCompleted.push("P02_PLAIN_LANGUAGE_EXPLANATION");
+  options?.onStageTransition?.("P02_EXPLANATION", 50);
 
-  // Stage 3 & 4: Contract-Grounded Bridge for P03/P04
-  const bridge = deriveContractGroundingFromP01P02(
-    p01Result.data,
-    p02Result.data,
-    input.rawText
-  );
-  stagesCompleted.push("P03_RISK_AND_PRIVACY_ANALYSIS");
-  stagesCompleted.push("P04_EVIDENCE_VERIFICATION");
-
-  // Stage 5: P05 Final Report Generation
-  const p05Result = await generateReportP05(
+  // Stage 3: P03 Risk and Privacy Analysis
+  options?.onStageTransition?.("P03_RISK_ANALYSIS", 55);
+  const p03Result = await analyzeP03(
     {
       p01Output: p01Result.data,
-      p02Output: p02Result.data,
-      p03Output: bridge.p03,
-      p04Output: bridge.p04,
+      clauses: p01Result.data.extractedClauses,
+      policyContext: input.rawText,
+      appName: input.appName,
+      documentType: input.documentType,
+    },
+    options?.p03Options
+  );
+
+  if (!p03Result.success || !p03Result.data) {
+    return {
+      success: false,
+      error: `Pipeline failed at stage P03: ${p03Result.error || "Risk and privacy analysis failed."}`,
+      stagesCompleted,
+    };
+  }
+  stagesCompleted.push("P03_RISK_AND_PRIVACY_ANALYSIS");
+  options?.onStageTransition?.("P03_RISK_ANALYSIS", 70);
+
+  // Stage 4: P04 Evidence Verification
+  options?.onStageTransition?.("P04_VERIFICATION", 75);
+  const p01Data = p01Result.data;
+  const p02Data = p02Result.data;
+  const p03Data = p03Result.data;
+
+  const expMap = new Map<string, ClauseExplanation>();
+  p02Data.clauseExplanations.forEach((exp) => expMap.set(exp.tempClauseId, exp));
+
+  const auditItems: P04AuditItem[] = p01Data.extractedClauses.map((c) => ({
+    tempClauseId: c.tempClauseId,
+    originalClauseText: c.originalClauseText,
+    sectionHeading: c.sectionHeading,
+    explanation: expMap.get(c.tempClauseId) || {
+      shortExplanation: c.operativeSummary,
+    },
+    privacyFindings: p03Data.privacyFindings,
+  }));
+
+  const p04Result = await verifyEvidenceP04(
+    {
+      clauses: p01Data.extractedClauses,
+      explanations: p02Data.clauseExplanations,
+      auditItems,
+      appName: input.appName,
+      documentType: input.documentType,
+    },
+    options?.p04Options
+  );
+
+  if (!p04Result.success || !p04Result.data) {
+    return {
+      success: false,
+      error: `Pipeline failed at stage P04: ${p04Result.error || "Evidence verification failed."}`,
+      stagesCompleted,
+    };
+  }
+  stagesCompleted.push("P04_EVIDENCE_VERIFICATION");
+  options?.onStageTransition?.("P04_VERIFICATION", 85);
+
+  // Stage 5: P05 Final Report Generation
+  options?.onStageTransition?.("P05_REPORT_GENERATION", 90);
+  const p04Data = p04Result.data;
+  const p05Result = await generateReportP05(
+    {
+      p01Output: p01Data,
+      p02Output: p02Data,
+      p03Output: p03Data,
+      p04Output: p04Data,
       appName: input.appName,
       documentType: input.documentType,
       documentTitle: input.documentTitle,
@@ -866,11 +1061,12 @@ export async function runFullPolicyAnalysisPipeline(
   if (!p05Result.success || !p05Result.data) {
     return {
       success: false,
-      error: `Pipeline failed at stage P05: ${p05Result.error}`,
+      error: `Pipeline failed at stage P05: ${p05Result.error || "Final report generation failed."}`,
       stagesCompleted,
     };
   }
   stagesCompleted.push("P05_FINAL_REPORT_GENERATION");
+  options?.onStageTransition?.("COMPLETED", 100);
 
   // Store in reportStore for retrieval
   reportStore.set(p05Result.data.id, p05Result.data);

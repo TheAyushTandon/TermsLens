@@ -16,7 +16,8 @@
   "test:p04": "node --experimental-strip-types tests/p04-evidence-verification.test.ts",
   "test:p04:live": "node --experimental-strip-types tests/p04-live-gemini.test.ts",
   "test:p05": "node --experimental-strip-types tests/p05-final-report-generation.test.ts",
-  "test:pipeline": "node --experimental-strip-types tests/p01-p02-pipeline.test.ts"
+  "test:pipeline": "node --experimental-strip-types tests/p01-p02-pipeline.test.ts",
+  "test:pipeline:p05": "node --experimental-strip-types tests/p01-p05-pipeline.test.ts"
 },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
