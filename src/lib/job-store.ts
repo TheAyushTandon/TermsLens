@@ -37,6 +37,10 @@ class JobStore {
   delete(jobId: string): boolean {
     return this.jobs.delete(jobId);
   }
+
+  clear(): void {
+    this.jobs.clear();
+  }
 }
 
 const globalForJobs = globalThis as unknown as {

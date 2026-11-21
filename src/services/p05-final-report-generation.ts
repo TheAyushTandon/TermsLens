@@ -11,6 +11,7 @@ import type {
   VerificationSummary,
   AnalysisReport,
   Clause,
+  PipelineStage,
   P01_Output,
   P02_Output,
 } from "../types/index.ts";
@@ -912,7 +913,9 @@ export interface FullPipelineOptions {
   p03Options?: P03AnalysisOptions;
   p04Options?: P04VerificationOptions;
   p05Options?: P05GenerationOptions;
-  onStageTransition?: (stage: string, progress: number) => void;
+  onStageTransition?: (stage: PipelineStage, progress: number) => void;
+  reportId?: string;
+  isCancelled?: () => boolean;
 }
 
 /**
@@ -938,6 +941,13 @@ export async function runFullPolicyAnalysisPipeline(
   const stagesCompleted: string[] = [];
 
   // Stage 1: P01 Clause Extraction
+  if (options?.isCancelled?.()) {
+    return {
+      success: false,
+      error: "Analysis cancelled by user.",
+      stagesCompleted,
+    };
+  }
   options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 10);
   const p01Result = await extractClausesP01(
     {
@@ -959,7 +969,14 @@ export async function runFullPolicyAnalysisPipeline(
   options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 25);
 
   // Stage 2: P02 Plain-Language Explanation
-  options?.onStageTransition?.("P02_EXPLANATION", 30);
+  if (options?.isCancelled?.()) {
+    return {
+      success: false,
+      error: "Analysis cancelled by user.",
+      stagesCompleted,
+    };
+  }
+  options?.onStageTransition?.("P02_PLAIN_LANGUAGE_EXPLANATION", 30);
   const p02Result = await explainClausesP02(
     {
       p01Output: p01Result.data,
@@ -977,10 +994,17 @@ export async function runFullPolicyAnalysisPipeline(
     };
   }
   stagesCompleted.push("P02_PLAIN_LANGUAGE_EXPLANATION");
-  options?.onStageTransition?.("P02_EXPLANATION", 50);
+  options?.onStageTransition?.("P02_PLAIN_LANGUAGE_EXPLANATION", 50);
 
   // Stage 3: P03 Risk and Privacy Analysis
-  options?.onStageTransition?.("P03_RISK_ANALYSIS", 55);
+  if (options?.isCancelled?.()) {
+    return {
+      success: false,
+      error: "Analysis cancelled by user.",
+      stagesCompleted,
+    };
+  }
+  options?.onStageTransition?.("P03_RISK_AND_PRIVACY_ANALYSIS", 55);
   const p03Result = await analyzeP03(
     {
       p01Output: p01Result.data,
@@ -1000,10 +1024,17 @@ export async function runFullPolicyAnalysisPipeline(
     };
   }
   stagesCompleted.push("P03_RISK_AND_PRIVACY_ANALYSIS");
-  options?.onStageTransition?.("P03_RISK_ANALYSIS", 70);
+  options?.onStageTransition?.("P03_RISK_AND_PRIVACY_ANALYSIS", 70);
 
   // Stage 4: P04 Evidence Verification
-  options?.onStageTransition?.("P04_VERIFICATION", 75);
+  if (options?.isCancelled?.()) {
+    return {
+      success: false,
+      error: "Analysis cancelled by user.",
+      stagesCompleted,
+    };
+  }
+  options?.onStageTransition?.("P04_EVIDENCE_VERIFICATION", 75);
   const p01Data = p01Result.data;
   const p02Data = p02Result.data;
   const p03Data = p03Result.data;
@@ -1040,11 +1071,22 @@ export async function runFullPolicyAnalysisPipeline(
     };
   }
   stagesCompleted.push("P04_EVIDENCE_VERIFICATION");
-  options?.onStageTransition?.("P04_VERIFICATION", 85);
+  options?.onStageTransition?.("P04_EVIDENCE_VERIFICATION", 85);
 
   // Stage 5: P05 Final Report Generation
-  options?.onStageTransition?.("P05_REPORT_GENERATION", 90);
+  if (options?.isCancelled?.()) {
+    return {
+      success: false,
+      error: "Analysis cancelled by user.",
+      stagesCompleted,
+    };
+  }
+  options?.onStageTransition?.("P05_FINAL_REPORT_GENERATION", 90);
   const p04Data = p04Result.data;
+  const p05Options: P05GenerationOptions = {
+    ...options?.p05Options,
+    reportId: options?.reportId || options?.p05Options?.reportId,
+  };
   const p05Result = await generateReportP05(
     {
       p01Output: p01Data,
@@ -1055,7 +1097,7 @@ export async function runFullPolicyAnalysisPipeline(
       documentType: input.documentType,
       documentTitle: input.documentTitle,
     },
-    options?.p05Options
+    p05Options
   );
 
   if (!p05Result.success || !p05Result.data) {

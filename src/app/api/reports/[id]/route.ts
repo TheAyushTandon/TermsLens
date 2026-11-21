@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { reportStore } from "@/lib/report-store";
-import { getReportOrFallback } from "@/lib/mock-reports";
-import { validateAnalysisReport } from "@/services/analysis-service";
+import { NextResponse } from "next/server.js";
+import { reportStore } from "../../../../lib/report-store.ts";
+import { getReportOrFallback } from "../../../../lib/mock-reports.ts";
+import { validateAnalysisReport } from "../../../../services/analysis-service.ts";
 
 export async function GET(
   _request: Request,

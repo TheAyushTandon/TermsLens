@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
-import { jobStore } from "@/lib/job-store";
+import { NextResponse } from "next/server.js";
+import { jobStore } from "../../../../../lib/job-store.ts";
 
 export async function GET(
   _request: Request,

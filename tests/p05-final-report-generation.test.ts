@@ -900,10 +900,10 @@ runTest("runFullPolicyAnalysisPipeline executes P01 -> P02 -> P03 -> P04 -> P05 
 
     // Verify stage transition callbacks
     assert.ok(transitions.some((t) => t.stage === "P01_CLAUSE_EXTRACTION"));
-    assert.ok(transitions.some((t) => t.stage === "P02_EXPLANATION"));
-    assert.ok(transitions.some((t) => t.stage === "P03_RISK_ANALYSIS"));
-    assert.ok(transitions.some((t) => t.stage === "P04_VERIFICATION"));
-    assert.ok(transitions.some((t) => t.stage === "P05_REPORT_GENERATION"));
+    assert.ok(transitions.some((t) => t.stage === "P02_PLAIN_LANGUAGE_EXPLANATION" || t.stage === "P02_EXPLANATION"));
+    assert.ok(transitions.some((t) => t.stage === "P03_RISK_AND_PRIVACY_ANALYSIS" || t.stage === "P03_RISK_ANALYSIS"));
+    assert.ok(transitions.some((t) => t.stage === "P04_EVIDENCE_VERIFICATION" || t.stage === "P04_VERIFICATION"));
+    assert.ok(transitions.some((t) => t.stage === "P05_FINAL_REPORT_GENERATION" || t.stage === "P05_REPORT_GENERATION"));
     assert.ok(transitions.some((t) => t.stage === "COMPLETED" && t.progress === 100));
 
     // Verify that report received real P03 outputs
