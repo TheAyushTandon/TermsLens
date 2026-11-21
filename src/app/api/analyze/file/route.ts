@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server.js";
 import { jobStore } from "../../../../lib/job-store.ts";
+import { isQueueConfigured, enqueueAnalysisJob } from "../../../../lib/queue.ts";
 import {
   extractTextFromFile,
   DocumentExtractionError,
@@ -123,7 +124,7 @@ export async function POST(request: Request) {
     const nowIso = new Date().toISOString();
 
     // 4. Initialize job state in jobStore
-    jobStore.set(jobId, {
+    await jobStore.set(jobId, {
       jobId,
       reportId,
       appName: appName.trim(),
@@ -131,19 +132,24 @@ export async function POST(request: Request) {
       status: "queued",
       currentStage: "QUEUED",
       message: "Document received and queued for ingestion.",
+      documentText: extracted.text,
       createdAt: nowIso,
       reportUrl: `/api/reports/${reportId}`,
     });
 
-    // 5. Dispatch the real asynchronous P01-P05 pipeline
-    const jobPromise = executeTextAnalysisJob({
-      jobId,
-      reportId,
-      text: extracted.text,
-      appName: appName.trim(),
-      documentType: docType,
-    });
-    activeJobPromises.set(jobId, jobPromise);
+    // 5. Dispatch via durable queue if configured; otherwise use in-process runner
+    if (isQueueConfigured()) {
+      await enqueueAnalysisJob({ jobId, reportId });
+    } else {
+      const jobPromise = executeTextAnalysisJob({
+        jobId,
+        reportId,
+        text: extracted.text,
+        appName: appName.trim(),
+        documentType: docType,
+      });
+      activeJobPromises.set(jobId, jobPromise);
+    }
 
     // 6. Return immediate 202 Accepted submission response conforming to contract
     const responsePayload: SubmitAnalysisResponse = {

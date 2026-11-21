@@ -51,7 +51,7 @@ export interface P04_VerifiedClause {
   tempClauseId: string;
   evidence: {
     exactQuote: string;
-    highlightExcerpt?: string;
+    highlightExcerpt: string;
   };
   verification: {
     status: VerificationStatus;
@@ -907,6 +907,13 @@ export function deriveContractGroundingFromP01P02(
   };
 }
 
+export interface PipelineCheckpointData {
+  p01Data?: P01_Output;
+  p02Data?: P02_Output;
+  p03Data?: P03_Output;
+  p04Data?: P04_Output;
+}
+
 export interface FullPipelineOptions {
   p01Options?: P01ExtractionOptions;
   p02Options?: P02ExplanationOptions;
@@ -914,6 +921,8 @@ export interface FullPipelineOptions {
   p04Options?: P04VerificationOptions;
   p05Options?: P05GenerationOptions;
   onStageTransition?: (stage: PipelineStage, progress: number) => void;
+  onStageSuccess?: (stage: PipelineStage, data: unknown, stagesCompleted: string[]) => Promise<void> | void;
+  checkpointData?: PipelineCheckpointData;
   reportId?: string;
   isCancelled?: () => boolean;
 }
@@ -948,25 +957,35 @@ export async function runFullPolicyAnalysisPipeline(
       stagesCompleted,
     };
   }
-  options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 10);
-  const p01Result = await extractClausesP01(
-    {
-      rawText: input.rawText,
-      appName: input.appName,
-      documentType: input.documentType,
-    },
-    options?.p01Options
-  );
 
-  if (!p01Result.success || !p01Result.data) {
-    return {
-      success: false,
-      error: `Pipeline failed at stage P01: ${p01Result.error || "Clause extraction failed."}`,
-      stagesCompleted,
-    };
+  let p01Data: P01_Output;
+  if (options?.checkpointData?.p01Data) {
+    p01Data = options.checkpointData.p01Data;
+    stagesCompleted.push("P01_CLAUSE_EXTRACTION");
+    options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 25);
+  } else {
+    options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 10);
+    const p01Result = await extractClausesP01(
+      {
+        rawText: input.rawText,
+        appName: input.appName,
+        documentType: input.documentType,
+      },
+      options?.p01Options
+    );
+
+    if (!p01Result.success || !p01Result.data) {
+      return {
+        success: false,
+        error: `Pipeline failed at stage P01: ${p01Result.error || "Clause extraction failed."}`,
+        stagesCompleted,
+      };
+    }
+    p01Data = p01Result.data;
+    stagesCompleted.push("P01_CLAUSE_EXTRACTION");
+    options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 25);
+    await options?.onStageSuccess?.("P01_CLAUSE_EXTRACTION", p01Data, stagesCompleted);
   }
-  stagesCompleted.push("P01_CLAUSE_EXTRACTION");
-  options?.onStageTransition?.("P01_CLAUSE_EXTRACTION", 25);
 
   // Stage 2: P02 Plain-Language Explanation
   if (options?.isCancelled?.()) {
@@ -976,25 +995,35 @@ export async function runFullPolicyAnalysisPipeline(
       stagesCompleted,
     };
   }
-  options?.onStageTransition?.("P02_PLAIN_LANGUAGE_EXPLANATION", 30);
-  const p02Result = await explainClausesP02(
-    {
-      p01Output: p01Result.data,
-      appName: input.appName,
-      documentType: input.documentType,
-    },
-    options?.p02Options
-  );
 
-  if (!p02Result.success || !p02Result.data) {
-    return {
-      success: false,
-      error: `Pipeline failed at stage P02: ${p02Result.error || "Plain-language explanation failed."}`,
-      stagesCompleted,
-    };
+  let p02Data: P02_Output;
+  if (options?.checkpointData?.p02Data) {
+    p02Data = options.checkpointData.p02Data;
+    stagesCompleted.push("P02_PLAIN_LANGUAGE_EXPLANATION");
+    options?.onStageTransition?.("P02_PLAIN_LANGUAGE_EXPLANATION", 50);
+  } else {
+    options?.onStageTransition?.("P02_PLAIN_LANGUAGE_EXPLANATION", 30);
+    const p02Result = await explainClausesP02(
+      {
+        p01Output: p01Data,
+        appName: input.appName,
+        documentType: input.documentType,
+      },
+      options?.p02Options
+    );
+
+    if (!p02Result.success || !p02Result.data) {
+      return {
+        success: false,
+        error: `Pipeline failed at stage P02: ${p02Result.error || "Plain-language explanation failed."}`,
+        stagesCompleted,
+      };
+    }
+    p02Data = p02Result.data;
+    stagesCompleted.push("P02_PLAIN_LANGUAGE_EXPLANATION");
+    options?.onStageTransition?.("P02_PLAIN_LANGUAGE_EXPLANATION", 50);
+    await options?.onStageSuccess?.("P02_PLAIN_LANGUAGE_EXPLANATION", p02Data, stagesCompleted);
   }
-  stagesCompleted.push("P02_PLAIN_LANGUAGE_EXPLANATION");
-  options?.onStageTransition?.("P02_PLAIN_LANGUAGE_EXPLANATION", 50);
 
   // Stage 3: P03 Risk and Privacy Analysis
   if (options?.isCancelled?.()) {
@@ -1004,27 +1033,37 @@ export async function runFullPolicyAnalysisPipeline(
       stagesCompleted,
     };
   }
-  options?.onStageTransition?.("P03_RISK_AND_PRIVACY_ANALYSIS", 55);
-  const p03Result = await analyzeP03(
-    {
-      p01Output: p01Result.data,
-      clauses: p01Result.data.extractedClauses,
-      policyContext: input.rawText,
-      appName: input.appName,
-      documentType: input.documentType,
-    },
-    options?.p03Options
-  );
 
-  if (!p03Result.success || !p03Result.data) {
-    return {
-      success: false,
-      error: `Pipeline failed at stage P03: ${p03Result.error || "Risk and privacy analysis failed."}`,
-      stagesCompleted,
-    };
+  let p03Data: P03_Output;
+  if (options?.checkpointData?.p03Data) {
+    p03Data = options.checkpointData.p03Data;
+    stagesCompleted.push("P03_RISK_AND_PRIVACY_ANALYSIS");
+    options?.onStageTransition?.("P03_RISK_AND_PRIVACY_ANALYSIS", 70);
+  } else {
+    options?.onStageTransition?.("P03_RISK_AND_PRIVACY_ANALYSIS", 55);
+    const p03Result = await analyzeP03(
+      {
+        p01Output: p01Data,
+        clauses: p01Data.extractedClauses,
+        policyContext: input.rawText,
+        appName: input.appName,
+        documentType: input.documentType,
+      },
+      options?.p03Options
+    );
+
+    if (!p03Result.success || !p03Result.data) {
+      return {
+        success: false,
+        error: `Pipeline failed at stage P03: ${p03Result.error || "Risk and privacy analysis failed."}`,
+        stagesCompleted,
+      };
+    }
+    p03Data = p03Result.data;
+    stagesCompleted.push("P03_RISK_AND_PRIVACY_ANALYSIS");
+    options?.onStageTransition?.("P03_RISK_AND_PRIVACY_ANALYSIS", 70);
+    await options?.onStageSuccess?.("P03_RISK_AND_PRIVACY_ANALYSIS", p03Data, stagesCompleted);
   }
-  stagesCompleted.push("P03_RISK_AND_PRIVACY_ANALYSIS");
-  options?.onStageTransition?.("P03_RISK_AND_PRIVACY_ANALYSIS", 70);
 
   // Stage 4: P04 Evidence Verification
   if (options?.isCancelled?.()) {
@@ -1034,44 +1073,51 @@ export async function runFullPolicyAnalysisPipeline(
       stagesCompleted,
     };
   }
-  options?.onStageTransition?.("P04_EVIDENCE_VERIFICATION", 75);
-  const p01Data = p01Result.data;
-  const p02Data = p02Result.data;
-  const p03Data = p03Result.data;
 
-  const expMap = new Map<string, ClauseExplanation>();
-  p02Data.clauseExplanations.forEach((exp) => expMap.set(exp.tempClauseId, exp));
+  let p04Data: P04_Output;
+  if (options?.checkpointData?.p04Data) {
+    p04Data = options.checkpointData.p04Data;
+    stagesCompleted.push("P04_EVIDENCE_VERIFICATION");
+    options?.onStageTransition?.("P04_EVIDENCE_VERIFICATION", 85);
+  } else {
+    options?.onStageTransition?.("P04_EVIDENCE_VERIFICATION", 75);
 
-  const auditItems: P04AuditItem[] = p01Data.extractedClauses.map((c) => ({
-    tempClauseId: c.tempClauseId,
-    originalClauseText: c.originalClauseText,
-    sectionHeading: c.sectionHeading,
-    explanation: expMap.get(c.tempClauseId) || {
-      shortExplanation: c.operativeSummary,
-    },
-    privacyFindings: p03Data.privacyFindings,
-  }));
+    const expMap = new Map<string, ClauseExplanation>();
+    p02Data.clauseExplanations.forEach((exp: any) => expMap.set(exp.tempClauseId, exp));
 
-  const p04Result = await verifyEvidenceP04(
-    {
-      clauses: p01Data.extractedClauses,
-      explanations: p02Data.clauseExplanations,
-      auditItems,
-      appName: input.appName,
-      documentType: input.documentType,
-    },
-    options?.p04Options
-  );
+    const auditItems: P04AuditItem[] = p01Data.extractedClauses.map((c: any) => ({
+      tempClauseId: c.tempClauseId,
+      originalClauseText: c.originalClauseText,
+      sectionHeading: c.sectionHeading,
+      explanation: expMap.get(c.tempClauseId) || {
+        shortExplanation: c.operativeSummary,
+      },
+      privacyFindings: p03Data.privacyFindings,
+    }));
 
-  if (!p04Result.success || !p04Result.data) {
-    return {
-      success: false,
-      error: `Pipeline failed at stage P04: ${p04Result.error || "Evidence verification failed."}`,
-      stagesCompleted,
-    };
+    const p04Result = await verifyEvidenceP04(
+      {
+        clauses: p01Data.extractedClauses,
+        explanations: p02Data.clauseExplanations,
+        auditItems,
+        appName: input.appName,
+        documentType: input.documentType,
+      },
+      options?.p04Options
+    );
+
+    if (!p04Result.success || !p04Result.data) {
+      return {
+        success: false,
+        error: `Pipeline failed at stage P04: ${p04Result.error || "Evidence verification failed."}`,
+        stagesCompleted,
+      };
+    }
+    p04Data = p04Result.data;
+    stagesCompleted.push("P04_EVIDENCE_VERIFICATION");
+    options?.onStageTransition?.("P04_EVIDENCE_VERIFICATION", 85);
+    await options?.onStageSuccess?.("P04_EVIDENCE_VERIFICATION", p04Data, stagesCompleted);
   }
-  stagesCompleted.push("P04_EVIDENCE_VERIFICATION");
-  options?.onStageTransition?.("P04_EVIDENCE_VERIFICATION", 85);
 
   // Stage 5: P05 Final Report Generation
   if (options?.isCancelled?.()) {
@@ -1082,7 +1128,6 @@ export async function runFullPolicyAnalysisPipeline(
     };
   }
   options?.onStageTransition?.("P05_FINAL_REPORT_GENERATION", 90);
-  const p04Data = p04Result.data;
   const p05Options: P05GenerationOptions = {
     ...options?.p05Options,
     reportId: options?.reportId || options?.p05Options?.reportId,
@@ -1111,7 +1156,8 @@ export async function runFullPolicyAnalysisPipeline(
   options?.onStageTransition?.("COMPLETED", 100);
 
   // Store in reportStore for retrieval
-  reportStore.set(p05Result.data.id, p05Result.data);
+  await reportStore.set(p05Result.data.id, p05Result.data);
+  await options?.onStageSuccess?.("P05_FINAL_REPORT_GENERATION", p05Result.data, stagesCompleted);
 
   return {
     success: true,

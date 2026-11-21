@@ -3,7 +3,7 @@ import { jobStore } from "../../../../../lib/job-store.ts";
 
 export async function POST(
   _request: Request,
-  context: { params: Promise<{ jobId: string }> | { jobId: string } }
+  context: { params: Promise<{ jobId: string }> }
 ) {
   try {
     const params = await context.params;
@@ -23,7 +23,7 @@ export async function POST(
     }
 
     const cleanJobId = decodeURIComponent(jobId.trim());
-    const job = jobStore.get(cleanJobId);
+    const job = await jobStore.get(cleanJobId);
 
     if (job) {
       job.status = "cancelled";
@@ -34,7 +34,7 @@ export async function POST(
         message: "Analysis cancelled by user.",
         stage: "CANCELLED",
       };
-      jobStore.set(cleanJobId, job);
+      await jobStore.set(cleanJobId, job);
     }
 
     return NextResponse.json(

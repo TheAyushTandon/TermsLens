@@ -1,6 +1,9 @@
 import { jobStore, type AnalysisJobRecord } from "../lib/job-store.ts";
 import { reportStore } from "../lib/report-store.ts";
-import { runFullPolicyAnalysisPipeline } from "./p05-final-report-generation.ts";
+import {
+  runFullPolicyAnalysisPipeline,
+  type PipelineCheckpointData,
+} from "./p05-final-report-generation.ts";
 import type {
   DocumentType,
   PipelineStage,
@@ -10,16 +13,44 @@ import type {
 
 /**
  * In-memory map of active asynchronous pipeline executions.
- * In a production architecture with persistent queues, this would be backed by Redis / BullMQ / Celery.
  */
 export const activeJobPromises = new Map<string, Promise<void>>();
 
 /**
- * Checks whether an in-memory job has been cancelled.
+ * In-memory registry of cancelled jobs for immediate synchronous inspection.
+ */
+export const cancelledJobIds = new Set<string>();
+
+/**
+ * Checks whether a job has been cancelled.
  */
 export function isJobCancelled(jobId: string): boolean {
+  if (cancelledJobIds.has(jobId)) {
+    return true;
+  }
   const job = jobStore.get(jobId);
-  return job?.status === "cancelled" || job?.currentStage === "CANCELLED";
+  if (job && !(job instanceof Promise)) {
+    if (job.status === "cancelled" || job.currentStage === "CANCELLED") {
+      cancelledJobIds.add(jobId);
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Async cancellation check compatible with both in-memory and PostgreSQL stores.
+ */
+export async function isJobCancelledAsync(jobId: string): Promise<boolean> {
+  if (cancelledJobIds.has(jobId)) {
+    return true;
+  }
+  const job = await jobStore.get(jobId);
+  if (job?.status === "cancelled" || job?.currentStage === "CANCELLED") {
+    cancelledJobIds.add(jobId);
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -78,9 +109,24 @@ export function determineFailingStage(
   return lastActiveStage;
 }
 
+function mapStageToDataKey(stage: PipelineStage): keyof PipelineCheckpointData | null {
+  switch (stage) {
+    case "P01_CLAUSE_EXTRACTION":
+      return "p01Data";
+    case "P02_PLAIN_LANGUAGE_EXPLANATION":
+      return "p02Data";
+    case "P03_RISK_AND_PRIVACY_ANALYSIS":
+      return "p03Data";
+    case "P04_EVIDENCE_VERIFICATION":
+      return "p04Data";
+    default:
+      return null;
+  }
+}
+
 /**
  * Executes the full P01-P05 pipeline for a submitted text policy asynchronously,
- * updating the in-memory jobStore through discrete lifecycle stages.
+ * updating the jobStore through discrete lifecycle stages and persisting checkpoints.
  */
 export async function executeTextAnalysisJob(params: {
   jobId: string;
@@ -93,12 +139,12 @@ export async function executeTextAnalysisJob(params: {
   const { jobId, reportId, text, appName, documentType, documentTitle } = params;
 
   // 1. Transition to PREPROCESSING
-  const initialJob = jobStore.get(jobId);
-  if (!initialJob || isJobCancelled(jobId)) {
+  const initialJob = await jobStore.get(jobId);
+  if (!initialJob || (await isJobCancelledAsync(jobId))) {
     return;
   }
 
-  jobStore.set(jobId, {
+  await jobStore.set(jobId, {
     ...initialJob,
     status: "processing",
     currentStage: "PREPROCESSING",
@@ -106,9 +152,10 @@ export async function executeTextAnalysisJob(params: {
   });
 
   let currentActiveStage: PipelineStage = "PREPROCESSING";
+  const checkpointData: PipelineCheckpointData = (initialJob.stageData as any) || {};
 
   try {
-    if (isJobCancelled(jobId)) {
+    if (await isJobCancelledAsync(jobId)) {
       return;
     }
 
@@ -121,13 +168,14 @@ export async function executeTextAnalysisJob(params: {
       },
       {
         reportId,
+        checkpointData,
         isCancelled: () => isJobCancelled(jobId),
-        onStageTransition: (stage: PipelineStage) => {
+        onStageTransition: async (stage: PipelineStage) => {
           if (isJobCancelled(jobId)) return;
           currentActiveStage = stage;
-          const currentJob = jobStore.get(jobId);
+          const currentJob = await jobStore.get(jobId);
           if (currentJob && currentJob.status !== "cancelled") {
-            jobStore.set(jobId, {
+            await jobStore.set(jobId, {
               ...currentJob,
               status: stage === "COMPLETED" ? "completed" : "processing",
               currentStage: stage,
@@ -136,19 +184,32 @@ export async function executeTextAnalysisJob(params: {
             });
           }
         },
+        onStageSuccess: async (stage: PipelineStage, data: unknown, completedStages: string[]) => {
+          const key = mapStageToDataKey(stage);
+          if (key) {
+            await jobStore.updateStage?.(
+              jobId,
+              stage,
+              "processing",
+              getStageDescription(stage),
+              { [key]: data },
+              completedStages
+            );
+          }
+        },
       }
     );
 
-    if (isJobCancelled(jobId)) {
+    if (await isJobCancelledAsync(jobId)) {
       return;
     }
 
     if (!result.success || !result.data) {
       const errorMsg = result.error || "Analysis pipeline execution failed.";
       const failingStage = determineFailingStage(errorMsg, currentActiveStage);
-      const currentJob = jobStore.get(jobId);
+      const currentJob = await jobStore.get(jobId);
       if (currentJob && currentJob.status !== "cancelled") {
-        jobStore.set(jobId, {
+        await jobStore.set(jobId, {
           ...currentJob,
           status: "failed",
           currentStage: "FAILED",
@@ -164,9 +225,9 @@ export async function executeTextAnalysisJob(params: {
     }
 
     // Success: report is stored in reportStore by runFullPolicyAnalysisPipeline
-    const currentJob = jobStore.get(jobId);
+    const currentJob = await jobStore.get(jobId);
     if (currentJob && currentJob.status !== "cancelled") {
-      jobStore.set(jobId, {
+      await jobStore.set(jobId, {
         ...currentJob,
         status: "completed",
         currentStage: "COMPLETED",
@@ -176,13 +237,13 @@ export async function executeTextAnalysisJob(params: {
       });
     }
   } catch (err: unknown) {
-    if (isJobCancelled(jobId)) return;
+    if (await isJobCancelledAsync(jobId)) return;
 
     const errorMsg = err instanceof Error ? err.message : String(err);
     const failingStage = determineFailingStage(errorMsg, currentActiveStage);
-    const currentJob = jobStore.get(jobId);
+    const currentJob = await jobStore.get(jobId);
     if (currentJob && currentJob.status !== "cancelled") {
-      jobStore.set(jobId, {
+      await jobStore.set(jobId, {
         ...currentJob,
         status: "failed",
         currentStage: "FAILED",
@@ -225,7 +286,7 @@ export async function waitForJob(
   }
 
   while (Date.now() - startTime < timeoutMs) {
-    const job = jobStore.get(jobId);
+    const job = await jobStore.get(jobId);
     if (!job) {
       throw new Error(`Job ${jobId} not found in store.`);
     }
@@ -244,7 +305,7 @@ export async function waitForJob(
     await new Promise((resolve) => setTimeout(resolve, pollIntervalMs));
   }
 
-  const finalJob = jobStore.get(jobId);
+  const finalJob = await jobStore.get(jobId);
   if (!finalJob) {
     throw new Error(`Job ${jobId} timed out and was not found.`);
   }

@@ -5,7 +5,7 @@ import { validateAnalysisReport } from "../../../../services/analysis-service.ts
 
 export async function GET(
   _request: Request,
-  context: { params: Promise<{ id: string }> | { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const params = await context.params;
@@ -26,8 +26,8 @@ export async function GET(
 
     const cleanId = decodeURIComponent(id.trim());
 
-    // 1. Check in-memory report store for dynamically generated reports or seeded mock reports
-    let report = reportStore.get(cleanId);
+    // 1. Check report store for dynamically generated reports or seeded mock reports
+    let report = await reportStore.get(cleanId);
 
     // 2. If not found in store, use fallback generator
     if (!report) {

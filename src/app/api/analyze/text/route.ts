@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server.js";
 import { jobStore } from "../../../../lib/job-store.ts";
+import { isQueueConfigured, enqueueAnalysisJob } from "../../../../lib/queue.ts";
 import { validatePolicyInput } from "../../../../lib/segmentation.ts";
 import {
   executeTextAnalysisJob,
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     const nowIso = new Date().toISOString();
 
     // 1. Initialize persistent state in jobStore
-    jobStore.set(jobId, {
+    await jobStore.set(jobId, {
       jobId,
       reportId,
       appName: appName.trim(),
@@ -102,19 +103,24 @@ export async function POST(request: Request) {
       status: "queued",
       currentStage: "QUEUED",
       message: "Document received and queued for ingestion.",
+      documentText: text,
       createdAt: nowIso,
       reportUrl: `/api/reports/${reportId}`,
     });
 
-    // 2. Dispatch the real asynchronous P01-P05 pipeline
-    const jobPromise = executeTextAnalysisJob({
-      jobId,
-      reportId,
-      text,
-      appName: appName.trim(),
-      documentType: docType,
-    });
-    activeJobPromises.set(jobId, jobPromise);
+    // 2. Dispatch via durable queue if configured; otherwise use in-process runner for local/test runs
+    if (isQueueConfigured()) {
+      await enqueueAnalysisJob({ jobId, reportId });
+    } else {
+      const jobPromise = executeTextAnalysisJob({
+        jobId,
+        reportId,
+        text,
+        appName: appName.trim(),
+        documentType: docType,
+      });
+      activeJobPromises.set(jobId, jobPromise);
+    }
 
     // 3. Return immediate 202 Accepted submission response conforming to contract
     const responsePayload: SubmitAnalysisResponse = {

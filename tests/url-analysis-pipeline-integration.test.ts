@@ -25,7 +25,7 @@
  */
 
 import assert from "node:assert/strict";
-import { handleAnalyzeUrlRequest as analyzeUrlRoute } from "../src/app/api/analyze/url/route.ts";
+import { handleAnalyzeUrlRequest as analyzeUrlRoute } from "../src/app/api/analyze/url/handler.ts";
 import { GET as getJobStatusRoute } from "../src/app/api/analyze/status/[jobId]/route.ts";
 import { GET as getReportRoute } from "../src/app/api/reports/[id]/route.ts";
 import {
