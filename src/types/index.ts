@@ -100,6 +100,48 @@ export interface P01_P02_CombinedOutput {
   }>;
 }
 
+export interface VerifiedClauseItem {
+  tempClauseId: string;
+  evidence: {
+    exactQuote: string;
+    highlightExcerpt: string;
+  };
+  verification: {
+    status: VerificationStatus;
+    reviewerType: "automated_pipeline";
+    notes: string;
+    verifiedAt: string;
+    evidenceMatchesOriginal: boolean;
+  };
+}
+
+export interface P04_Output {
+  verifiedClauses: VerifiedClauseItem[];
+  verificationSummary: {
+    totalVerified: number;
+    supportedCount: number;
+    partiallySupportedCount: number;
+    unverifiedCount: number;
+    rejectedCount: number;
+    methodologyDescription: string;
+  };
+}
+
+export interface P04_ExecutionMeta {
+  model: string;
+  promptVersion: "v1" | "v2" | "v3";
+  durationMs: number;
+  clausesAudited: number;
+  deterministicQuoteMatchRate: number;
+}
+
+export interface P04_Result {
+  success: boolean;
+  data?: P04_Output;
+  metadata?: P04_ExecutionMeta;
+  error?: string;
+}
+
 export type DocumentType =
   | "terms_of_service"
   | "privacy_policy"
