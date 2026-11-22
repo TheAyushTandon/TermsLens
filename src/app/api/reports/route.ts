@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server.js";
+import { NextResponse, connection } from "next/server.js";
 import { reportStore } from "../../../lib/report-store.ts";
 import type {
   AnalysisReport,
@@ -7,8 +7,9 @@ import type {
   RiskLevel,
 } from "../../../types/index.ts";
 
-export async function GET(_request: Request) {
+export async function GET(request: Request) {
   try {
+    await connection();
     const rawReports = await reportStore.getAll();
 
     const reports: DocumentAnalysis[] = rawReports.map((rep: AnalysisReport) => {
