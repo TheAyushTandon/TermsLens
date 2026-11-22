@@ -28,6 +28,7 @@ interface SidebarProps {
   onNavigateToDashboard?: () => void;
   onNavigateToAnalyze?: () => void;
   onNavigateToReports?: () => void;
+  onOpenSettings?: () => void;
 }
 
 export function Sidebar({
@@ -39,6 +40,7 @@ export function Sidebar({
   onNavigateToDashboard,
   onNavigateToAnalyze,
   onNavigateToReports,
+  onOpenSettings,
 }: SidebarProps) {
   const pathname = usePathname();
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
@@ -77,7 +79,7 @@ export function Sidebar({
       icon: Settings,
       href: "#settings",
       onClick: () => {
-        alert("Settings options: Notification alerts, text size, and preferred policy language.");
+        onOpenSettings?.();
       },
     },
   ];

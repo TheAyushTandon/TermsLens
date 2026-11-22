@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Sidebar } from "./sidebar";
 import { Header } from "./header";
+import { SettingsModal } from "./settings-modal";
 import { UserProfile } from "@/types";
 
 interface AppLayoutProps {
@@ -31,6 +32,7 @@ export function AppLayout({
   onNavigateToReports,
 }: AppLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
   const sectionLabels: Record<string, string> = {
     dashboard: "Dashboard",
@@ -53,6 +55,7 @@ export function AppLayout({
         onNavigateToDashboard={onNavigateToDashboard}
         onNavigateToAnalyze={onNavigateToAnalyze}
         onNavigateToReports={onNavigateToReports}
+        onOpenSettings={() => setIsSettingsOpen(true)}
       />
 
       {/* Main content wrapper */}
@@ -71,6 +74,12 @@ export function AppLayout({
           {children}
         </main>
       </div>
+
+      {/* Settings Modal */}
+      <SettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
     </div>
   );
 }

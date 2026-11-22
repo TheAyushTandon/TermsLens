@@ -42,6 +42,29 @@ interface DocumentUploadSectionProps {
   isHighlit?: boolean;
 }
 
+const SAMPLE_POLICY_TEXT = `TERMS OF SERVICE FOR CLOUDPULSE
+
+1. ACCEPTANCE OF TERMS
+By accessing or using CloudPulse (the "Service"), you agree to be bound by these Terms of Service. If you do not agree to all terms, do not use the Service.
+
+2. MANDATORY ARBITRATION AND CLASS ACTION WAIVER
+Any dispute, claim or controversy arising out of or relating to this Agreement or the breach, termination, enforcement, interpretation or validity thereof, including the determination of the scope or applicability of this agreement to arbitrate, shall be determined by binding arbitration in Wilmington, Delaware before one arbitrator. YOU AND CLOUDPULSE AGREE THAT EACH MAY BRING CLAIMS AGAINST THE OTHER ONLY IN YOUR OR ITS INDIVIDUAL CAPACITY, AND NOT AS A PLAINTIFF OR CLASS MEMBER IN ANY PURPORTED CLASS OR REPRESENTATIVE PROCEEDING.
+
+3. DATA COLLECTION AND TELEMETRY
+CloudPulse collects personal information including your full name, email address, IP address, device fingerprints, and geolocation coordinates. We track application usage statistics and telemetry to personalize services and optimize our infrastructure.
+
+4. THIRD-PARTY DATA SHARING AND ADVERTISING
+We may share your personal data, interaction history, and profile insights with third-party advertising partners, commercial affiliates, and data brokers for behavioral ad targeting and marketing campaigns.
+
+5. AUTOMATIC SUBSCRIPTION RENEWAL AND BILLING
+Subscriptions are billed on a recurring monthly basis. Your subscription will automatically renew at the beginning of each billing cycle unless cancelled at least forty-eight (48) hours prior to the renewal date. All payments are non-refundable.
+
+6. ACCOUNT TERMINATION AND DATA RETENTION
+CloudPulse reserves the right to suspend or terminate your account at our sole discretion, without prior notice or liability, for any reason. We retain user logs and telemetry indefinitely for audit, security, and analytical purposes.
+
+7. MODIFICATIONS TO AGREEMENT
+We reserve the right to modify these Terms at any time without individual notification. Your continued use of the Service following any changes constitutes acceptance of the new Terms.`;
+
 const PIPELINE_STAGES: Array<{
   stage: PipelineStage;
   code: string;
@@ -123,6 +146,19 @@ export function DocumentUploadSection({
   // Demonstration Fixture State
   const [activeDemoKey, setActiveDemoKey] = React.useState<"spotify" | "instagram" | "discord" | null>(null);
   const [demoNotice, setDemoNotice] = React.useState<string | null>(null);
+
+  // Live Pipeline Engine Mode (Live Gemini AI vs Demo Mode)
+  const [isLiveMode, setIsLiveMode] = React.useState(true);
+
+  React.useEffect(() => {
+    // Default to Live Gemini AI pipeline in client browser
+    analysisService.setLiveApiEnabled(true);
+  }, []);
+
+  const handleToggleLiveMode = (live: boolean) => {
+    setIsLiveMode(live);
+    analysisService.setLiveApiEnabled(live);
+  };
 
   // Validation & Processing State
   const [errors, setErrors] = React.useState<ValidationErrors>({});
@@ -278,8 +314,39 @@ export function DocumentUploadSection({
     setBackendNotice(null);
 
     setDemoNotice(
-      `This is illustrative demonstration content, not the actual official policy of ${fixture.appName}.`
+      `Loaded illustrative demonstration text for ${fixture.appName}. Click "Analyze Document" to run the 5-stage AI pipeline, or inspect the pre-analyzed fixture directly.`
     );
+  };
+
+  const handleOpenInstantDemoModal = async () => {
+    if (!activeDemoKey) return;
+    const result = await analysisService.processAnalysisRequest({
+      mode: activeTab,
+      appName,
+      documentType,
+      file: selectedFile,
+      text: pastedText,
+      url: policyUrl,
+      isDemoFixture: true,
+      demoKey: activeDemoKey,
+    });
+
+    if (result.document) {
+      onAnalysisCreated(result.document);
+      onOpenAnalysis(result.document);
+    }
+  };
+
+  const handleLoadSamplePolicy = () => {
+    setActiveTab("text");
+    setAppName("CloudPulse");
+    setDocumentType("terms_of_service");
+    setPastedText(SAMPLE_POLICY_TEXT);
+    setActiveDemoKey(null);
+    setDemoNotice(null);
+    setBackendNotice(null);
+    clearError("text");
+    clearError("appName");
   };
 
   // Clear text editor
@@ -294,6 +361,7 @@ export function DocumentUploadSection({
   const handleRunSimulation = async () => {
     setBackendNotice(null);
     setErrors({});
+    analysisService.setLiveApiEnabled(false);
     if (activeTab === "file" && selectedFile) {
       await analysisJob.startFileJob(selectedFile, appName.trim() || "Uploaded Document", documentType);
     } else if (activeTab === "text") {
@@ -339,27 +407,7 @@ export function DocumentUploadSection({
     setIsSubmitting(true);
 
     try {
-      // 1. If demonstration shortcut is selected: instant pre-analyzed fixture
-      if (activeDemoKey) {
-        const result = await analysisService.processAnalysisRequest({
-          mode: activeTab,
-          appName,
-          documentType,
-          file: selectedFile,
-          text: pastedText,
-          url: policyUrl,
-          isDemoFixture: true,
-          demoKey: activeDemoKey,
-        });
-
-        if (result.document) {
-          onAnalysisCreated(result.document);
-          onOpenAnalysis(result.document);
-        }
-        return;
-      }
-
-      // 2. Validate form inputs
+      // 1. Validate form inputs
       const newErrors: ValidationErrors = {};
       if (!appName.trim()) {
         newErrors.appName = "Please enter an application or counterparty name.";
@@ -386,37 +434,17 @@ export function DocumentUploadSection({
         return;
       }
 
-      // 3. If Live API mode is enabled: execute live pipeline job
-      if (analysisService.isLiveApiEnabled()) {
-        if (activeTab === "file" && selectedFile) {
-          await analysisJob.startFileJob(selectedFile, appName.trim(), documentType);
-        } else if (activeTab === "text") {
-          await analysisJob.startTextJob(pastedText.trim(), appName.trim(), documentType);
-        } else if (activeTab === "url") {
-          await analysisJob.startUrlJob(policyUrl.trim(), appName.trim(), documentType);
-        }
-        return;
+      // 2. Synchronize active adapter mode (live AI vs mock demo)
+      analysisService.setLiveApiEnabled(isLiveMode);
+
+      // 3. Dispatch pipeline job
+      if (activeTab === "file" && selectedFile) {
+        await analysisJob.startFileJob(selectedFile, appName.trim(), documentType);
+      } else if (activeTab === "text") {
+        await analysisJob.startTextJob(pastedText.trim(), appName.trim(), documentType);
+      } else if (activeTab === "url") {
+        await analysisJob.startUrlJob(policyUrl.trim(), appName.trim(), documentType);
       }
-
-      // 4. In Demo Adapter mode: display validated contract payload and simulation option
-      const summaryText =
-        activeTab === "file"
-          ? `${selectedFile?.name} (${fileDetails?.sizeFormatted})`
-          : activeTab === "text"
-          ? `${textCounts.wordCount} words (${textCounts.charCount} chars)`
-          : policyUrl;
-
-      setBackendNotice({
-        title: "Frontend Ready for Live Backend",
-        message:
-          "The frontend API integration layer is ready. In this demo environment, live AI inference requires a connected FastAPI backend (or set NEXT_PUBLIC_ENABLE_LIVE_API=true). You can inspect the validated API schema below or run a simulated 5-stage pipeline to test the UI experience.",
-        payloadPreview: {
-          mode: activeTab,
-          appName: appName.trim(),
-          documentType,
-          inputSummary: summaryText,
-        },
-      });
     } catch (err: any) {
       console.error("Submission failed:", err);
       setErrors({ general: err?.message || "An unexpected error occurred while processing your request." });
@@ -432,72 +460,136 @@ export function DocumentUploadSection({
       }`}
     >
       <CardContent className="p-5 sm:p-6">
-        {/* Section Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+        {/* Section Header with Mode Selector and Input Tabs */}
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
           <div>
-            <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              <span>Analyze a Policy</span>
-            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span>Analyze a Policy</span>
+              </h2>
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
+                  isLiveMode
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-400"
+                    : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-400"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    isLiveMode ? "bg-emerald-500 animate-pulse" : "bg-blue-500"
+                  }`}
+                />
+                {isLiveMode ? "LIVE AI ACTIVE (GEMINI 3.5)" : "DEMO SIMULATION"}
+              </span>
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Choose an input method below, specify the app name, and generate a clear breakdown.
+              Choose an input method below, specify the app name, and run the 5-stage policy explainer pipeline.
             </p>
           </div>
 
-          {/* Mode Tabs */}
-          <div
-            role="tablist"
-            className="flex items-center rounded-lg bg-slate-100 p-1 dark:bg-slate-800 text-xs"
-          >
-            <button
-              role="tab"
-              aria-selected={activeTab === "file"}
-              onClick={() => handleTabChange("file")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-medium transition-colors ${
-                activeTab === "file"
-                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
-              }`}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            {/* Live AI vs Demo Switcher */}
+            <div
+              role="group"
+              aria-label="Engine Mode"
+              className="flex items-center rounded-lg border border-slate-200/90 bg-slate-100/80 p-0.5 dark:border-slate-800 dark:bg-slate-900 text-xs"
             >
-              <UploadCloud className="h-3.5 w-3.5" />
-              <span>File Upload</span>
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === "text"}
-              onClick={() => handleTabChange("text")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-medium transition-colors ${
-                activeTab === "text"
-                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
-              }`}
+              <button
+                type="button"
+                onClick={() => handleToggleLiveMode(true)}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                  isLiveMode
+                    ? "bg-blue-600 text-white shadow-xs font-semibold"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                }`}
+                title="Execute real Gemini AI inference and persist to PostgreSQL"
+              >
+                <Sparkles className="h-3 w-3" />
+                <span>Live Gemini AI</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggleLiveMode(false)}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+                  !isLiveMode
+                    ? "bg-slate-800 text-white shadow-xs dark:bg-slate-700 font-semibold"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                }`}
+                title="Test discrete stage progression without live AI calls"
+              >
+                <span>Demo Mode</span>
+              </button>
+            </div>
+
+            {/* Input Mode Tabs */}
+            <div
+              role="tablist"
+              className="flex items-center rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800 text-xs"
             >
-              <FileCode className="h-3.5 w-3.5" />
-              <span>Paste Text</span>
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === "url"}
-              onClick={() => handleTabChange("url")}
-              className={`flex items-center gap-1.5 rounded-md px-3 py-1 font-medium transition-colors ${
-                activeTab === "url"
-                  ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
-                  : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
-              }`}
-            >
-              <Link2 className="h-3.5 w-3.5" />
-              <span>Website URL</span>
-            </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === "file"}
+                onClick={() => handleTabChange("file")}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors ${
+                  activeTab === "file"
+                    ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                }`}
+              >
+                <UploadCloud className="h-3.5 w-3.5" />
+                <span>File Upload</span>
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === "text"}
+                onClick={() => handleTabChange("text")}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors ${
+                  activeTab === "text"
+                    ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                }`}
+              >
+                <FileCode className="h-3.5 w-3.5" />
+                <span>Paste Text</span>
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeTab === "url"}
+                onClick={() => handleTabChange("url")}
+                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors ${
+                  activeTab === "url"
+                    ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
+                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                }`}
+              >
+                <Link2 className="h-3.5 w-3.5" />
+                <span>Website URL</span>
+              </button>
+            </div>
           </div>
         </div>
 
         {/* Demo Notification Banner if shortcut was clicked */}
         {demoNotice && (
-          <div className="mt-4 flex items-start gap-2.5 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
-            <Info className="h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
-            <div className="flex-1">
-              <span className="font-semibold">Demonstration Fixture:</span> {demoNotice}
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+            <div className="flex items-start gap-2.5 flex-1">
+              <Info className="h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <div>
+                <span className="font-semibold">Demonstration Content:</span> {demoNotice}
+              </div>
             </div>
+            {activeDemoKey && (
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={handleOpenInstantDemoModal}
+                className="self-start sm:self-auto border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+              >
+                View Sample Breakdown
+              </Button>
+            )}
           </div>
         )}
 
@@ -616,6 +708,14 @@ export function DocumentUploadSection({
                 <span className="text-[11px] font-mono text-slate-400">
                   {textCounts.wordCount.toLocaleString()} words • {textCounts.charCount.toLocaleString()} chars
                 </span>
+                <button
+                  type="button"
+                  onClick={handleLoadSamplePolicy}
+                  className="text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors"
+                >
+                  Load Sample Policy
+                </button>
+                <span className="text-slate-300 dark:text-slate-700">•</span>
                 <button
                   type="button"
                   onClick={handleClearText}
@@ -846,8 +946,14 @@ export function DocumentUploadSection({
                         ? "Analysis Failed"
                         : "Analyzing Document..."}
                     </span>
-                    <span className="text-[10px] font-mono font-medium rounded-full px-2 py-0.5 bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-                      {analysisService.isLiveApiEnabled() ? "LIVE API" : "DEMO PIPELINE"}
+                    <span
+                      className={`text-[10px] font-mono font-semibold rounded-full px-2 py-0.5 ${
+                        analysisService.isLiveApiEnabled()
+                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                          : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
+                      }`}
+                    >
+                      {analysisService.isLiveApiEnabled() ? "LIVE GEMINI AI" : "DEMO PIPELINE"}
                     </span>
                   </h3>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
