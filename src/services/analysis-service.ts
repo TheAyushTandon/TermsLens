@@ -782,14 +782,44 @@ export const analysisService = {
   },
 
   async getJobStatus(jobId: string, signal?: AbortSignal): Promise<JobStatusResponse> {
+    if (activeAdapter.mode === "live" || jobId.startsWith("job_live_") || jobId.startsWith("job_")) {
+      try {
+        const httpAdapter = activeAdapter instanceof HttpApiAnalysisAdapter ? activeAdapter : new HttpApiAnalysisAdapter();
+        return await httpAdapter.getJobStatus(jobId, signal);
+      } catch (err) {
+        if (activeAdapter.mode === "live" && !jobId.startsWith("job_demo_")) {
+          throw err;
+        }
+      }
+    }
     return activeAdapter.getJobStatus(jobId, signal);
   },
 
   async cancelJob(jobId: string): Promise<boolean> {
+    if (activeAdapter.mode === "live" || jobId.startsWith("job_live_") || jobId.startsWith("job_")) {
+      try {
+        const httpAdapter = activeAdapter instanceof HttpApiAnalysisAdapter ? activeAdapter : new HttpApiAnalysisAdapter();
+        return await httpAdapter.cancelJob(jobId);
+      } catch (err) {
+        if (activeAdapter.mode === "live" && !jobId.startsWith("job_demo_")) {
+          throw err;
+        }
+      }
+    }
     return activeAdapter.cancelJob(jobId);
   },
 
   async getReportById(reportId: string, signal?: AbortSignal): Promise<AnalysisReport> {
+    if (activeAdapter.mode === "live" || reportId.startsWith("rep_live_") || reportId.startsWith("rep_")) {
+      try {
+        const httpAdapter = activeAdapter instanceof HttpApiAnalysisAdapter ? activeAdapter : new HttpApiAnalysisAdapter();
+        return await httpAdapter.getReportById(reportId, signal);
+      } catch (liveErr) {
+        if (activeAdapter.mode === "live" && !reportId.startsWith("doc_demo_")) {
+          throw liveErr;
+        }
+      }
+    }
     return activeAdapter.getReportById(reportId, signal);
   },
 

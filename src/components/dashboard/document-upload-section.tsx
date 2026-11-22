@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   UploadCloud,
@@ -976,15 +977,16 @@ export function DocumentUploadSection({
                   </Button>
                 )}
                 {analysisJob.jobState === "completed" && analysisJob.reportId && (
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => router.push(`/reports/${analysisJob.reportId}`)}
-                    rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
-                  >
-                    Open Full Report
-                  </Button>
+                  <Link href={`/reports/${analysisJob.reportId}`}>
+                    <Button
+                      type="button"
+                      size="sm"
+                      rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
+                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium cursor-pointer"
+                    >
+                      Open Full Report
+                    </Button>
+                  </Link>
                 )}
                 {(analysisJob.jobState === "completed" ||
                   analysisJob.jobState === "failed" ||
@@ -1112,15 +1114,16 @@ export function DocumentUploadSection({
                   </span>
                 </div>
                 {analysisJob.reportId && (
-                  <Button
-                    type="button"
-                    size="xs"
-                    onClick={() => router.push(`/reports/${analysisJob.reportId}`)}
-                    rightIcon={<ExternalLink className="h-3 w-3" />}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium"
-                  >
-                    View Report
-                  </Button>
+                  <Link href={`/reports/${analysisJob.reportId}`}>
+                    <Button
+                      type="button"
+                      size="xs"
+                      rightIcon={<ExternalLink className="h-3 w-3" />}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white font-medium cursor-pointer"
+                    >
+                      View Report
+                    </Button>
+                  </Link>
                 )}
               </div>
             )}
