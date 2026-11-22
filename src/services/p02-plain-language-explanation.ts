@@ -80,13 +80,27 @@ export function validateP02OutputSchema(
   errors: string[];
 } {
   const errors: string[] = [];
-  if (!raw || typeof raw !== "object") {
-    return { isValid: false, errors: ["P02 output is not a valid JSON object."] };
+  if (!raw || (typeof raw !== "object" && !Array.isArray(raw))) {
+    return { isValid: false, errors: ["P02 output is not a valid JSON object or array."] };
   }
 
-  const obj = raw as Record<string, unknown>;
+  let rawList: unknown[] | null = null;
+  if (Array.isArray(raw)) {
+    rawList = raw;
+  } else if (raw && typeof raw === "object") {
+    const obj = raw as Record<string, unknown>;
+    if (Array.isArray(obj.clauseExplanations)) {
+      rawList = obj.clauseExplanations;
+    } else if (Array.isArray(obj.explanations)) {
+      rawList = obj.explanations;
+    } else if (Array.isArray(obj.clauses)) {
+      rawList = obj.clauses;
+    } else if (Array.isArray(obj.items)) {
+      rawList = obj.items;
+    }
+  }
 
-  if (!Array.isArray(obj.clauseExplanations)) {
+  if (!rawList) {
     errors.push("Missing or non-array 'clauseExplanations' property.");
     return { isValid: false, errors };
   }
@@ -94,8 +108,8 @@ export function validateP02OutputSchema(
   const validatedExplanations: ClauseExplanation[] = [];
   const returnedIds = new Set<string>();
 
-  for (let i = 0; i < obj.clauseExplanations.length; i++) {
-    const item = obj.clauseExplanations[i];
+  for (let i = 0; i < rawList.length; i++) {
+    const item = rawList[i];
     if (!item || typeof item !== "object") {
       errors.push(`ClauseExplanation at index ${i} is not an object.`);
       continue;

@@ -85,21 +85,33 @@ export function validateP01OutputSchema(raw: unknown): {
   errors: string[];
 } {
   const errors: string[] = [];
-  if (!raw || typeof raw !== "object") {
-    return { isValid: false, errors: ["P01 output is not a valid JSON object."] };
+  if (!raw || (typeof raw !== "object" && !Array.isArray(raw))) {
+    return { isValid: false, errors: ["P01 output is not a valid JSON object or array."] };
   }
 
-  const obj = raw as Record<string, unknown>;
+  const obj = typeof raw === "object" && raw !== null && !Array.isArray(raw) ? (raw as Record<string, unknown>) : null;
+  let rawList: unknown[] | null = null;
+  if (Array.isArray(raw)) {
+    rawList = raw;
+  } else if (obj) {
+    if (Array.isArray(obj.extractedClauses)) {
+      rawList = obj.extractedClauses;
+    } else if (Array.isArray(obj.clauses)) {
+      rawList = obj.clauses;
+    } else if (Array.isArray(obj.items)) {
+      rawList = obj.items;
+    }
+  }
 
-  if (!Array.isArray(obj.extractedClauses)) {
+  if (!rawList) {
     errors.push("Missing or non-array 'extractedClauses' property.");
     return { isValid: false, errors };
   }
 
   const validatedClauses: ExtractedClause[] = [];
 
-  for (let i = 0; i < obj.extractedClauses.length; i++) {
-    const item = obj.extractedClauses[i];
+  for (let i = 0; i < rawList.length; i++) {
+    const item = rawList[i];
     if (!item || typeof item !== "object") {
       errors.push(`Clause at index ${i} is not an object.`);
       continue;
@@ -134,7 +146,7 @@ export function validateP01OutputSchema(raw: unknown): {
     });
   }
 
-  const total = typeof obj.totalClausesAnalyzed === "number" ? obj.totalClausesAnalyzed : validatedClauses.length;
+  const total = obj && typeof obj.totalClausesAnalyzed === "number" ? obj.totalClausesAnalyzed : validatedClauses.length;
 
   return {
     isValid: errors.length === 0,
