@@ -741,6 +741,9 @@ let activeAdapter: AnalysisAdapter = initialLiveApiEnabled
   ? new HttpApiAnalysisAdapter()
   : new MockAnalysisAdapter();
 
+let cachedAnalyses: DocumentAnalysis[] | null = null;
+let cachedStats: ConsumerStats | null = null;
+
 /**
  * Frontend service abstraction for TermsLens.
  * Decoupled from component rendering to enable straightforward backend API integration.
@@ -832,7 +835,36 @@ export const analysisService = {
   },
 
   async getDashboardStats(isEmptyState: boolean = false): Promise<ConsumerStats> {
-    return Promise.resolve(isEmptyState ? emptyStatsMock : consumerStatsMock);
+    if (isEmptyState) return emptyStatsMock;
+    if (cachedStats) return cachedStats;
+
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch("/api/reports");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && data.stats) {
+            cachedStats = data.stats;
+            if (Array.isArray(data.reports)) {
+              cachedAnalyses = data.reports;
+            }
+            return data.stats;
+          }
+        }
+      } catch {
+        // Fall back gracefully to default consumerStatsMock
+      }
+    }
+
+    return consumerStatsMock;
+  },
+
+  recordNewAnalysis(doc: DocumentAnalysis): void {
+    if (!cachedAnalyses) {
+      cachedAnalyses = [doc, ...mockAnalyses];
+    } else if (!cachedAnalyses.some((d) => d.id === doc.id)) {
+      cachedAnalyses = [doc, ...cachedAnalyses];
+    }
   },
 
   validateFile(file: File | null): FileValidationResult {
@@ -938,10 +970,33 @@ export const analysisService = {
   },
 
   async getAnalyses(filters?: AnalysisFilters): Promise<DocumentAnalysis[]> {
-    let results = [...mockAnalyses];
+    let results: DocumentAnalysis[] = [];
+
+    // Attempt to load live persistent reports from PostgreSQL API
+    if (typeof window !== "undefined") {
+      try {
+        const res = await fetch("/api/reports");
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.success && Array.isArray(data.reports) && data.reports.length > 0) {
+            results = data.reports;
+            cachedAnalyses = results;
+            if (data.stats) {
+              cachedStats = data.stats;
+            }
+          }
+        }
+      } catch {
+        // Fall back gracefully
+      }
+    }
+
+    if (results.length === 0) {
+      results = cachedAnalyses ? [...cachedAnalyses] : [...mockAnalyses];
+    }
 
     if (!filters) {
-      return Promise.resolve(results);
+      return results;
     }
 
     if (filters.query && filters.query.trim().length > 0) {

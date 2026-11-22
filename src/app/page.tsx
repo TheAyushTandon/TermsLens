@@ -118,6 +118,7 @@ export default function DashboardPage() {
   };
 
   const handleAnalysisCreated = React.useCallback((newDoc: DocumentAnalysis) => {
+    analysisService.recordNewAnalysis(newDoc);
     setDocuments((prev) => {
       if (prev.some((d) => d.id === newDoc.id)) {
         return prev;
