@@ -65,29 +65,29 @@ export function Modal({
       {/* Content Container */}
       <div
         className={cn(
-          "relative z-50 flex w-full flex-col max-h-[90vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 transition-all animate-in zoom-in-95 duration-150",
+          "relative z-50 flex w-full flex-col max-h-[90vh] overflow-hidden rounded-2xl border border-[#d7d9ce] bg-white shadow-xl transition-all animate-in zoom-in-95 duration-150",
           maxWidthClasses[maxWidth],
           className
         )}
       >
         {/* Header */}
         {(title || description) && (
-          <div className="flex items-start justify-between border-b border-slate-100 p-5 dark:border-slate-800/80">
+          <div className="flex items-start justify-between border-b border-slate-100 p-5">
             <div className="space-y-1 pr-6">
               {title && (
-                <h2 className="text-lg font-semibold tracking-tight text-slate-900 dark:text-slate-100">
+                <h2 className="text-lg font-semibold tracking-tight text-slate-900">
                   {title}
                 </h2>
               )}
               {description && (
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-500">
                   {description}
                 </p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition-colors"
+              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-colors"
               aria-label="Close dialog"
             >
               <X className="h-4 w-4" />

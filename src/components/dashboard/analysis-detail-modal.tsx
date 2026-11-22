@@ -58,8 +58,8 @@ export function AnalysisDetailModal({
       <div className="space-y-6 text-xs sm:text-sm">
         {/* Demonstrative Fixture Disclaimer Banner */}
         {document.isDemonstrationFixture && (
-          <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3.5 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300">
-            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+          <div className="flex items-start gap-2.5 rounded-xl border border-amber-200 bg-amber-50/90 p-3.5 text-xs text-amber-900">
+            <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 mt-0.5" />
             <div>
               <span className="font-semibold uppercase tracking-wider text-[11px] mr-1.5">
                 Demonstration Fixture:
@@ -70,19 +70,19 @@ export function AnalysisDetailModal({
         )}
 
         {/* Top Summary Bar */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-xl border border-slate-200/90 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/50">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 rounded-xl border border-slate-200/90 bg-slate-50/70 p-4">
           <div className="space-y-1">
             <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
               Clauses Flagged
             </span>
             <div className="flex items-center gap-2">
               {document.flaggedClausesCount > 0 ? (
-                <div className="flex items-center gap-1.5 font-semibold text-amber-700 dark:text-amber-400 text-sm">
+                <div className="flex items-center gap-1.5 font-semibold text-amber-700 text-sm">
                   <AlertTriangle className="h-4 w-4" />
                   <span>{document.flaggedClausesCount} clauses to review</span>
                 </div>
               ) : (
-                <div className="text-emerald-700 dark:text-emerald-400 font-semibold text-sm">
+                <div className="text-emerald-700 font-semibold text-sm">
                   0 red flags found
                 </div>
               )}
@@ -92,12 +92,12 @@ export function AnalysisDetailModal({
             </p>
           </div>
 
-          <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-2 sm:pt-0 sm:pl-4">
+          <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-4">
             <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
               Reading Time Saved
             </span>
-            <div className="flex items-center gap-1.5 text-slate-900 dark:text-slate-100 font-semibold text-sm">
-              <Clock className="h-4 w-4 text-blue-600" />
+            <div className="flex items-center gap-1.5 text-slate-900 font-semibold text-sm">
+              <Clock className="h-4 w-4 text-[#119da4]" />
               <span>{document.timeSavedMinutes} minutes saved</span>
             </div>
             <p className="text-[11px] text-slate-500">
@@ -105,12 +105,12 @@ export function AnalysisDetailModal({
             </p>
           </div>
 
-          <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-slate-200 dark:border-slate-800 pt-2 sm:pt-0 sm:pl-4">
+          <div className="space-y-1 border-t sm:border-t-0 sm:border-l border-slate-200 pt-2 sm:pt-0 sm:pl-4">
             <span className="text-[11px] font-medium text-slate-500 uppercase tracking-wider">
               Privacy-Related Findings
             </span>
-            <div className="flex items-center gap-1.5 text-slate-900 dark:text-slate-100 font-semibold text-sm">
-              <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[11px] text-rose-800 dark:bg-rose-950/60 dark:text-rose-400 font-medium">
+            <div className="flex items-center gap-1.5 text-slate-900 font-semibold text-sm">
+              <span className="rounded bg-rose-100 px-1.5 py-0.5 text-[11px] text-rose-800 font-medium">
                 {document.privacyFindingsCount} tracking disclosures
               </span>
             </div>
@@ -123,12 +123,12 @@ export function AnalysisDetailModal({
         {/* Executive Summary Section */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-[#13505b]">
               Simple Summary
             </h4>
             <button
               onClick={handleCopySummary}
-              className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 dark:text-blue-400"
+              className="inline-flex items-center gap-1 text-xs text-[#119da4] hover:text-[#0c7489] transition-colors"
             >
               {copied ? (
                 <>
@@ -143,14 +143,14 @@ export function AnalysisDetailModal({
               )}
             </button>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-white p-4 text-slate-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+          <div className="rounded-xl border border-slate-200 bg-white p-4 text-slate-700 text-xs sm:text-sm leading-relaxed">
             {document.summary}
           </div>
         </div>
 
         {/* Extracted Findings with Exact Legal Excerpts vs Plain English */}
         <div className="space-y-3">
-          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
+          <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-600">
             Clauses Identified ({document.findings.length})
           </h4>
 
@@ -158,10 +158,10 @@ export function AnalysisDetailModal({
             {document.findings.map((finding) => (
               <div
                 key={finding.id}
-                className="rounded-xl border border-slate-200/90 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-3"
+                className="rounded-xl border border-slate-200/90 bg-white p-4 space-y-3"
               >
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <span className="font-semibold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">
+                  <span className="font-semibold text-slate-900 text-xs sm:text-sm">
                     {finding.title}
                   </span>
                   <Badge variant={finding.riskLevel} size="sm">
@@ -174,7 +174,7 @@ export function AnalysisDetailModal({
                 </div>
 
                 {/* Excerpt */}
-                <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 dark:bg-slate-800/60 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800">
+                <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600 border border-slate-200/60">
                   <span className="text-[10px] font-sans font-semibold uppercase tracking-wider text-slate-400 block mb-1">
                     Original Agreement Excerpt:
                   </span>
@@ -188,7 +188,7 @@ export function AnalysisDetailModal({
                       <AlertTriangle className="h-3 w-3 text-amber-500" />
                       What this means for you
                     </span>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-normal">
+                    <p className="text-xs text-slate-700 leading-normal">
                       {finding.explanation}
                     </p>
                   </div>
@@ -198,7 +198,7 @@ export function AnalysisDetailModal({
                       <Lightbulb className="h-3 w-3 text-emerald-500" />
                       What you can do
                     </span>
-                    <p className="text-xs text-slate-700 dark:text-slate-300 leading-normal">
+                    <p className="text-xs text-slate-700 leading-normal">
                       {finding.recommendation}
                     </p>
                   </div>
@@ -209,7 +209,7 @@ export function AnalysisDetailModal({
         </div>
 
         {/* Responsible AI Disclaimer in modal */}
-        <div className="flex items-start gap-2 rounded-lg bg-slate-50 p-3 text-[11px] text-slate-500 dark:bg-slate-800/50 dark:text-slate-400 border border-slate-200/80 dark:border-slate-800">
+        <div className="flex items-start gap-2 rounded-lg bg-slate-50 p-3 text-[11px] text-slate-500 border border-slate-200/80">
           <Info className="h-4 w-4 flex-shrink-0 text-slate-400 mt-0.5" />
           <span>
             TermsLens provides informational analysis, not legal advice. Always refer to the original document for final decisions.
@@ -217,7 +217,7 @@ export function AnalysisDetailModal({
         </div>
 
         {/* Modal Footer Actions */}
-        <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
           <Button size="sm" variant="ghost" onClick={onClose} className="text-xs">
             Close
           </Button>

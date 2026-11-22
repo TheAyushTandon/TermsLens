@@ -9,18 +9,18 @@ export const badgeVariants = cva(
     variants: {
       variant: {
         default:
-          "border border-slate-200 bg-slate-50 text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200",
+          "border border-slate-200 bg-slate-50 text-slate-800",
         secondary:
-          "border border-transparent bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+          "border border-transparent bg-slate-100 text-slate-700",
         outline:
-          "border border-slate-200 text-slate-700 dark:border-slate-700 dark:text-slate-300",
-        high: "border border-rose-200 bg-rose-50/90 text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-400",
+          "border border-slate-200 text-slate-700",
+        high: "border border-rose-200 bg-rose-50/90 text-rose-700",
         medium:
-          "border border-amber-200 bg-amber-50/90 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-400",
-        low: "border border-sky-200 bg-sky-50/90 text-sky-700 dark:border-sky-900/50 dark:bg-sky-950/40 dark:text-sky-400",
-        safe: "border border-emerald-200 bg-emerald-50/90 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-400",
+          "border border-amber-200 bg-amber-50/90 text-amber-700",
+        low: "border border-sky-200 bg-sky-50/90 text-sky-700",
+        safe: "border border-emerald-200 bg-emerald-50/90 text-emerald-700",
         neutral:
-          "border border-slate-200 bg-slate-100/80 text-slate-600 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400",
+          "border border-slate-200 bg-slate-100/80 text-slate-600",
       },
       size: {
         sm: "px-2 py-0.5 text-[11px] leading-tight",

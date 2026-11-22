@@ -7,7 +7,6 @@ import {
   Eye,
   Quote,
   Info,
-  ShieldCheck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -15,41 +14,39 @@ export function ProductExperience() {
   const features = [
     {
       icon: FileText,
-      title: "Simplifies complicated legal language",
+      title: "Plain English, No Jargon",
       description:
-        "Transforms dense paragraphs and confusing legalese into clear, plain-English summaries you can actually understand.",
+        "Transforms dense paragraphs and confusing legalese into clear, simple summaries you can read in two minutes.",
     },
     {
       icon: AlertTriangle,
-      title: "Identifies clauses that deserve attention",
+      title: "Spots Hidden Traps",
       description:
-        "Highlights key terms such as mandatory arbitration, class action waivers, and automatic subscription renewals before you agree.",
+        "Flags tricky terms like binding arbitration, automatic monthly renewals, and rights you give up before agreeing.",
     },
     {
       icon: Eye,
-      title: "Explains privacy & data collection",
+      title: "Explains How Your Data Is Used",
       description:
-        "Breaks down what personal data is gathered, whether it is sold to advertisers, and how your information is retained.",
+        "Shows exactly what personal info is tracked, whether it gets sold to advertisers, and if you can delete it.",
     },
     {
       icon: Quote,
-      title: "Shows original text supporting each finding",
+      title: "Word-for-Word Proof",
       description:
-        "Every AI insight cites the exact sentence and section directly from the original agreement so you can verify it yourself.",
+        "Every single insight cites the exact sentence and section directly from the original agreement so you can verify it yourself.",
     },
   ];
 
   return (
     <section aria-label="How TermsLens Works" className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-            How TermsLens Helps You
-          </h2>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Designed for everyday users who want clarity, transparency, and control.
-          </p>
-        </div>
+      <div>
+        <h2 className="text-base font-semibold tracking-tight text-[#040404]">
+          How TermsLens Protects You
+        </h2>
+        <p className="text-xs text-[#4a5759] mt-0.5">
+          Designed for everyday people who want clarity, transparency, and control over what they sign.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -58,16 +55,16 @@ export function ProductExperience() {
           return (
             <Card
               key={idx}
-              className="border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs"
+              className="border-[#d7d9ce] bg-white transition-all duration-200 hover:border-[#119da4] shadow-xs"
             >
               <CardContent className="p-4 sm:p-5 space-y-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#eef1ec] text-[#119da4]">
                   <Icon className="h-4 w-4" />
                 </div>
-                <h3 className="text-xs font-semibold text-slate-900 dark:text-slate-100 leading-snug">
+                <h3 className="text-xs font-semibold text-[#040404] leading-snug">
                   {feature.title}
                 </h3>
-                <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                <p className="text-[11px] text-[#4a5759] leading-relaxed">
                   {feature.description}
                 </p>
               </CardContent>
@@ -77,16 +74,15 @@ export function ProductExperience() {
       </div>
 
       {/* Subtle Responsible AI Disclaimer */}
-      <div className="flex items-center gap-2 rounded-xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-        <Info className="h-4 w-4 flex-shrink-0 text-slate-400" />
+      <div className="flex items-center gap-2 rounded-xl border border-[#d7d9ce] bg-[#f7f8f5] px-4 py-3 text-xs text-[#4a5759]">
+        <Info className="h-4 w-4 shrink-0 text-[#119da4]" />
         <p className="text-[11px] leading-relaxed">
-          <strong className="font-semibold text-slate-700 dark:text-slate-300">
-            Responsible AI Disclaimer:
+          <strong className="font-semibold text-[#13505b]">
+            Responsible AI Notice:
           </strong>{" "}
-          TermsLens provides informational analysis, not legal advice. Always refer to the original document for final decisions.
+          TermsLens provides informational analysis, not formal legal advice. Always refer to the original document for official terms.
         </p>
       </div>
     </section>
   );
 }
-

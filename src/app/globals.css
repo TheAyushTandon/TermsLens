@@ -1,7 +1,5 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
-
 @theme {
   --color-border: var(--border);
   --color-input: var(--input);
@@ -45,83 +43,52 @@
 }
 
 :root {
-  --background: #fbfbfd;
-  --foreground: #090d16;
+  /* Requested Color Scheme */
+  --color-dark-cyan: #119da4;
+  --color-cerulean: #0c7489;
+  --color-dark-teal: #13505b;
+  --color-black: #040404;
+  --color-dust-grey: #d7d9ce;
+
+  /* App Theme Tokens */
+  --background: #f7f8f5;
+  --foreground: #040404;
 
   --card: #ffffff;
-  --card-foreground: #090d16;
+  --card-foreground: #040404;
 
   --popover: #ffffff;
-  --popover-foreground: #090d16;
+  --popover-foreground: #040404;
 
-  --primary: #0f172a;
+  --primary: #119da4;
   --primary-foreground: #ffffff;
 
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
+  --secondary: #eef1ec;
+  --secondary-foreground: #13505b;
 
-  --muted: #f4f6f9;
-  --muted-foreground: #64748b;
+  --muted: #f1f3ed;
+  --muted-foreground: #4a5759;
 
-  --accent: #f1f5f9;
-  --accent-foreground: #0f172a;
+  --accent: #e5ebe9;
+  --accent-foreground: #0c7489;
 
-  --destructive: #ef4444;
+  --destructive: #c93b2b;
   --destructive-foreground: #ffffff;
 
-  --border: #e2e8f0;
-  --input: #e2e8f0;
-  --ring: #0f172a;
+  --border: #d7d9ce;
+  --input: #d7d9ce;
+  --ring: #119da4;
 
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 
   --sidebar-background: #ffffff;
-  --sidebar-foreground: #1e293b;
-  --sidebar-primary: #0f172a;
+  --sidebar-foreground: #040404;
+  --sidebar-primary: #119da4;
   --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f8fafc;
-  --sidebar-accent-foreground: #0f172a;
-  --sidebar-border: #f1f5f9;
-  --sidebar-ring: #cbd5e1;
-}
-
-.dark {
-  --background: #090d16;
-  --foreground: #f8fafc;
-
-  --card: #0f172a;
-  --card-foreground: #f8fafc;
-
-  --popover: #0f172a;
-  --popover-foreground: #f8fafc;
-
-  --primary: #f8fafc;
-  --primary-foreground: #0f172a;
-
-  --secondary: #1e293b;
-  --secondary-foreground: #f8fafc;
-
-  --muted: #1e293b;
-  --muted-foreground: #94a3b8;
-
-  --accent: #1e293b;
-  --accent-foreground: #f8fafc;
-
-  --destructive: #7f1d1d;
-  --destructive-foreground: #fef2f2;
-
-  --border: #1e293b;
-  --input: #1e293b;
-  --ring: #94a3b8;
-
-  --sidebar-background: #0b1120;
-  --sidebar-foreground: #f1f5f9;
-  --sidebar-primary: #38bdf8;
-  --sidebar-primary-foreground: #0f172a;
-  --sidebar-accent: #1e293b;
-  --sidebar-accent-foreground: #f8fafc;
-  --sidebar-border: #1e293b;
-  --sidebar-ring: #334155;
+  --sidebar-accent: #f2f5f1;
+  --sidebar-accent-foreground: #13505b;
+  --sidebar-border: #d7d9ce;
+  --sidebar-ring: #119da4;
 }
 
 * {
@@ -130,11 +97,61 @@
 }
 
 body {
+  font-family: "Ubuntu", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--background);
   color: var(--foreground);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* User-Requested Ubuntu Typography Utility Classes */
+.ubuntu-light {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.ubuntu-regular {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.ubuntu-medium {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.ubuntu-bold {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+.ubuntu-light-italic {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 300;
+  font-style: italic;
+}
+
+.ubuntu-regular-italic {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.ubuntu-medium-italic {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.ubuntu-bold-italic {
+  font-family: "Ubuntu", sans-serif;
+  font-weight: 700;
+  font-style: italic;
 }
 
 /* Custom scrollbar for modern subtle appearance */
@@ -146,9 +163,9 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #d7d9ce;
   border-radius: 9999px;
 }
-.dark ::-webkit-scrollbar-thumb {
-  background: #334155;
+::-webkit-scrollbar-thumb:hover {
+  background: #119da4;
 }

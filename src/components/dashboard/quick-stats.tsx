@@ -6,7 +6,6 @@ import {
   AlertTriangle,
   EyeOff,
   Clock,
-  Info,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -21,28 +20,28 @@ export function QuickStats({ stats }: QuickStatsProps) {
 
   const statCards = [
     {
-      title: "Documents Analyzed",
+      title: "Policies Checked",
       value: stats.documentsAnalyzed.toString(),
-      subtext: isZero ? "Upload a document to begin" : "Demonstration records loaded",
+      subtext: isZero ? "Paste or upload to start" : "Agreements in your repository",
       icon: FileText,
-      tooltip: "The number of policies currently loaded in the repository.",
-      accent: "slate",
+      tooltip: "The total number of legal agreements analyzed.",
+      iconBg: "bg-[#eef1ec] text-[#13505b]",
     },
     {
-      title: "Clauses Requiring Attention",
+      title: "Clauses to Watch Out For",
       value: stats.clausesRequiringAttention.toString(),
-      subtext: isZero ? "No clauses flagged yet" : "Clauses to review before agreeing",
+      subtext: isZero ? "No high-risk terms found" : "Arbitration, auto-renewals, waivers",
       icon: AlertTriangle,
-      tooltip: "Clauses such as arbitration waivers, auto-renewals, or liability exclusions.",
-      accent: "amber",
+      tooltip: "Clauses like binding arbitration, class-action waivers, or auto-renewals.",
+      iconBg: "bg-amber-50 text-amber-700",
     },
     {
-      title: "Privacy-Related Findings",
+      title: "Data Tracking Practices",
       value: stats.privacyRelatedFindings.toString(),
-      subtext: isZero ? "No tracking data recorded" : "Tracking & third-party sharing",
+      subtext: isZero ? "No tracking data logged" : "Location, device ID, ad targeting",
       icon: EyeOff,
-      tooltip: "Practices involving location tracking, advertising profile sharing, or voice data collection.",
-      accent: "rose",
+      tooltip: "How companies gather, share, or sell your personal data.",
+      iconBg: "bg-rose-50 text-[#c93b2b]",
     },
     {
       title: "Reading Time Saved",
@@ -51,75 +50,46 @@ export function QuickStats({ stats }: QuickStatsProps) {
         : stats.readingTimeSavedMinutes >= 60
         ? `${(stats.readingTimeSavedMinutes / 60).toFixed(1)} hrs`
         : `${stats.readingTimeSavedMinutes} mins`,
-      subtext: isZero ? "Based on average reading speed" : "Estimated time saved using AI summaries",
+      subtext: isZero ? "Based on average reading speed" : "Estimated reading time saved",
       icon: Clock,
-      tooltip: "Calculated based on standard 200 words-per-minute average reading speed.",
-      accent: "blue",
+      tooltip: "Time saved based on average reading speed of 200 words per minute.",
+      iconBg: "bg-[#e5ebe9] text-[#0c7489]",
     },
   ];
 
   return (
-    <div className="space-y-2.5">
-      {/* Header bar with DEMO DATA indicator when metrics are calculated from sample records */}
-      {stats.isDemoData && !isZero && (
-        <div className="flex items-center justify-between text-xs px-1">
-          <span className="text-slate-500 dark:text-slate-400 font-medium text-[11px]">
-            Summary Metrics
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-100/90 px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-            DEMO DATA
-          </span>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((card, idx) => {
-          const Icon = card.icon;
-          return (
-            <Card
-              key={idx}
-              className="group relative overflow-hidden transition-all duration-200 hover:border-slate-300 dark:hover:border-slate-700"
-            >
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <span>{card.title}</span>
-                    <Tooltip content={card.tooltip}>
-                      <Info className="h-3 w-3 cursor-pointer text-slate-400 hover:text-slate-600" />
-                    </Tooltip>
-                  </div>
-                  <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
-                      card.accent === "rose"
-                        ? "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
-                        : card.accent === "amber"
-                        ? "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
-                        : card.accent === "blue"
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
-                        : "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                  </div>
+    <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+      {statCards.map((card, idx) => {
+        const Icon = card.icon;
+        return (
+          <Card
+            key={idx}
+            className="border-[#d7d9ce] bg-white transition-all duration-200 hover:border-[#119da4] hover:shadow-sm"
+          >
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium text-[#4a5759]">
+                  {card.title}
+                </span>
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-lg ${card.iconBg}`}
+                >
+                  <Icon className="h-4 w-4" />
                 </div>
+              </div>
 
-                <div className="mt-3 flex items-baseline gap-2">
-                  <span className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100 font-mono">
-                    {card.value}
-                  </span>
+              <div className="mt-3">
+                <div className="text-2xl font-bold tracking-tight text-[#040404]">
+                  {card.value}
                 </div>
-
-                <div className="mt-2.5 flex items-center justify-between text-xs">
-                  <span className="text-slate-500 dark:text-slate-400 truncate">
-                    {card.subtext}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                <p className="mt-1 text-[11px] text-[#4a5759]">
+                  {card.subtext}
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }

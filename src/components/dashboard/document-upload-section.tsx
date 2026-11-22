@@ -6,9 +6,9 @@ import { useRouter } from "next/navigation";
 import {
   UploadCloud,
   FileText,
+  FileSearch,
   Link2,
   FileCode,
-  Sparkles,
   ArrowRight,
   AlertCircle,
   FileCheck,
@@ -461,116 +461,73 @@ export function DocumentUploadSection({
 
   return (
     <Card
-      className={`border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 overflow-hidden shadow-xs transition-all duration-300 ${
-        isHighlit ? "ring-2 ring-blue-600/30" : ""
+      className={`border-[#d7d9ce] bg-white overflow-hidden shadow-xs transition-all duration-300 ${
+        isHighlit ? "ring-2 ring-[#119da4]/30" : ""
       }`}
     >
       <CardContent className="p-5 sm:p-6">
-        {/* Section Header with Mode Selector and Input Tabs */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 pb-4 border-b border-slate-100 dark:border-slate-800">
+        {/* Section Header with Input Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-[#eef1ec]">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-base font-semibold tracking-tight text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                <span>Analyze a Policy</span>
+              <h2 className="text-base font-semibold tracking-tight text-[#040404] flex items-center gap-2">
+                <FileSearch className="h-4 w-4 text-[#119da4]" />
+                <span>Scan a Policy</span>
               </h2>
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border ${
-                  isLiveMode
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-400"
-                    : "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-400"
-                }`}
-              >
-                <span
-                  className={`h-1.5 w-1.5 rounded-full ${
-                    isLiveMode ? "bg-emerald-500 animate-pulse" : "bg-blue-500"
-                  }`}
-                />
-                {isLiveMode ? "LIVE AI ACTIVE (GEMINI 3.5)" : "DEMO SIMULATION"}
+              <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border border-[#d7d9ce] bg-[#f7f8f5] text-[#13505b]">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#119da4] animate-pulse" />
+                Live Analysis Ready
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Choose an input method below, specify the app name, and run the 5-stage policy explainer pipeline.
+            <p className="text-xs text-[#4a5759] mt-0.5">
+              Paste or upload legal terms to break them down into plain English.
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-            {/* Live AI vs Demo Switcher */}
-            <div
-              role="group"
-              aria-label="Engine Mode"
-              className="flex items-center rounded-lg border border-slate-200/90 bg-slate-100/80 p-0.5 dark:border-slate-800 dark:bg-slate-900 text-xs"
-            >
-              <button
-                type="button"
-                onClick={() => handleToggleLiveMode(true)}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-                  isLiveMode
-                    ? "bg-blue-600 text-white shadow-xs font-semibold"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
-                }`}
-                title="Execute real Gemini AI inference and persist to PostgreSQL"
-              >
-                <Sparkles className="h-3 w-3" />
-                <span>Live Gemini AI</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggleLiveMode(false)}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
-                  !isLiveMode
-                    ? "bg-slate-800 text-white shadow-xs dark:bg-slate-700 font-semibold"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
-                }`}
-                title="Test discrete stage progression without live AI calls"
-              >
-                <span>Demo Mode</span>
-              </button>
-            </div>
-
+          <div className="flex items-center">
             {/* Input Mode Tabs */}
             <div
               role="tablist"
-              className="flex items-center rounded-lg bg-slate-100 p-0.5 dark:bg-slate-800 text-xs"
+              className="flex items-center rounded-xl bg-[#eef1ec] p-1 text-xs"
             >
               <button
                 role="tab"
                 aria-selected={activeTab === "file"}
                 onClick={() => handleTabChange("file")}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-all ${
                   activeTab === "file"
-                    ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                    ? "bg-white text-[#040404] shadow-xs font-semibold"
+                    : "text-[#4a5759] hover:text-[#040404]"
                 }`}
               >
-                <UploadCloud className="h-3.5 w-3.5" />
-                <span>File Upload</span>
+                <UploadCloud className="h-3.5 w-3.5 text-[#119da4]" />
+                <span>Upload File</span>
               </button>
               <button
                 role="tab"
                 aria-selected={activeTab === "text"}
                 onClick={() => handleTabChange("text")}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-all ${
                   activeTab === "text"
-                    ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                    ? "bg-white text-[#040404] shadow-xs font-semibold"
+                    : "text-[#4a5759] hover:text-[#040404]"
                 }`}
               >
-                <FileCode className="h-3.5 w-3.5" />
+                <FileCode className="h-3.5 w-3.5 text-[#119da4]" />
                 <span>Paste Text</span>
               </button>
               <button
                 role="tab"
                 aria-selected={activeTab === "url"}
                 onClick={() => handleTabChange("url")}
-                className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 font-medium transition-all ${
                   activeTab === "url"
-                    ? "bg-white text-slate-900 shadow-xs dark:bg-slate-950 dark:text-white"
-                    : "text-slate-600 hover:text-slate-900 dark:text-slate-400"
+                    ? "bg-white text-[#040404] shadow-xs font-semibold"
+                    : "text-[#4a5759] hover:text-[#040404]"
                 }`}
               >
-                <Link2 className="h-3.5 w-3.5" />
-                <span>Website URL</span>
+                <Link2 className="h-3.5 w-3.5 text-[#119da4]" />
+                <span>Website Link</span>
               </button>
             </div>
           </div>
@@ -578,11 +535,11 @@ export function DocumentUploadSection({
 
         {/* Demo Notification Banner if shortcut was clicked */}
         {demoNotice && (
-          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-xl border border-blue-200 bg-blue-50/80 p-3.5 text-xs text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+          <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 rounded-xl border border-[#d7d9ce] bg-[#f7f8f5] p-3.5 text-xs text-[#040404]">
             <div className="flex items-start gap-2.5 flex-1">
-              <Info className="h-4 w-4 flex-shrink-0 text-blue-600 dark:text-blue-400 mt-0.5" />
+              <Info className="h-4 w-4 flex-shrink-0 text-[#119da4] mt-0.5" />
               <div>
-                <span className="font-semibold">Demonstration Content:</span> {demoNotice}
+                <span className="font-semibold text-[#13505b]">Demonstration Content:</span> {demoNotice}
               </div>
             </div>
             {activeDemoKey && (
@@ -591,7 +548,7 @@ export function DocumentUploadSection({
                 variant="outline"
                 size="xs"
                 onClick={handleOpenInstantDemoModal}
-                className="self-start sm:self-auto border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300"
+                className="self-start sm:self-auto border-[#119da4] text-[#119da4] hover:bg-[#119da4]/10"
               >
                 View Sample Breakdown
               </Button>
@@ -612,12 +569,12 @@ export function DocumentUploadSection({
               }}
               className={`relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-7 text-center transition-all ${
                 dragActive
-                  ? "border-blue-600 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-950/20"
+                  ? "border-[#119da4] bg-[#119da4]/5"
                   : selectedFile
-                  ? "border-emerald-300 bg-emerald-50/20 dark:border-emerald-800 dark:bg-emerald-950/10 cursor-default"
+                  ? "border-emerald-300 bg-emerald-50/20 cursor-default"
                   : errors.file
-                  ? "border-rose-300 bg-rose-50/20 dark:border-rose-800 dark:bg-rose-950/10 cursor-pointer"
-                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50 dark:border-slate-800 dark:hover:border-slate-700 dark:hover:bg-slate-900/40 cursor-pointer"
+                  ? "border-rose-300 bg-rose-50/20 cursor-pointer"
+                  : "border-slate-200 hover:border-slate-300 hover:bg-slate-50/50 cursor-pointer"
               }`}
             >
               <input
@@ -633,15 +590,15 @@ export function DocumentUploadSection({
 
               {selectedFile && fileDetails ? (
                 <div className="flex flex-col items-center w-full max-w-md space-y-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400 shadow-xs">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-xs">
                     <FileCheck className="h-6 w-6" />
                   </div>
                   <div className="text-center space-y-1">
-                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 break-all">
+                    <p className="text-sm font-semibold text-slate-900 break-all">
                       {fileDetails.name}
                     </p>
-                    <div className="flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                      <span className="font-mono rounded bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700 dark:text-slate-300">
+                    <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+                      <span className="font-mono rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold text-slate-700">
                         {fileDetails.extension}
                       </span>
                       <span>•</span>
@@ -667,7 +624,7 @@ export function DocumentUploadSection({
                       size="xs"
                       onClick={handleRemoveFile}
                       leftIcon={<Trash2 className="h-3 w-3 text-rose-500" />}
-                      className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                      className="text-rose-600 hover:text-rose-700 hover:bg-rose-50"
                     >
                       Remove
                     </Button>
@@ -675,11 +632,11 @@ export function DocumentUploadSection({
                 </div>
               ) : (
                 <div className="flex flex-col items-center space-y-2">
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                     <UploadCloud className="h-5 w-5" />
                   </div>
                   <div>
-                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                    <span className="text-sm font-semibold text-slate-800">
                       Click to choose file
                     </span>{" "}
                     <span className="text-xs text-slate-500">or drag and drop here</span>
@@ -692,7 +649,7 @@ export function DocumentUploadSection({
             </div>
 
             {errors.file && (
-              <div className="flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2 text-xs text-rose-600">
                 <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>{errors.file}</span>
               </div>
@@ -706,7 +663,7 @@ export function DocumentUploadSection({
             <div className="flex items-center justify-between">
               <label
                 htmlFor="policy-text-area"
-                className="text-xs font-medium text-slate-700 dark:text-slate-300"
+                className="text-xs font-medium text-slate-700"
               >
                 Policy Text Content
               </label>
@@ -717,11 +674,11 @@ export function DocumentUploadSection({
                 <button
                   type="button"
                   onClick={handleLoadSamplePolicy}
-                  className="text-[11px] font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400 transition-colors"
+                  className="text-[11px] font-medium text-[#119da4] hover:text-[#0c7489] transition-colors"
                 >
                   Load Sample Policy
                 </button>
-                <span className="text-slate-300 dark:text-slate-700">•</span>
+                <span className="text-slate-300">•</span>
                 <button
                   type="button"
                   onClick={handleClearText}
@@ -743,15 +700,15 @@ export function DocumentUploadSection({
               }}
               placeholder="Paste contract terms, arbitration provisions, or privacy policy text here..."
               rows={7}
-              className={`w-full rounded-xl border bg-white p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 dark:bg-slate-900 dark:text-slate-100 font-sans leading-relaxed transition-colors ${
+              className={`w-full rounded-xl border bg-white p-3.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900/10 font-sans leading-relaxed transition-colors ${
                 errors.text
-                  ? "border-rose-300 dark:border-rose-800"
-                  : "border-slate-200 dark:border-slate-800"
+                  ? "border-rose-300"
+                  : "border-slate-200"
               }`}
             />
 
             {errors.text && (
-              <div className="flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400">
+              <div className="flex items-center gap-2 text-xs text-rose-600">
                 <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
                 <span>{errors.text}</span>
               </div>
@@ -765,7 +722,7 @@ export function DocumentUploadSection({
             <div className="space-y-1.5">
               <label
                 htmlFor="policy-url-input"
-                className="text-xs font-medium text-slate-700 dark:text-slate-300"
+                className="text-xs font-medium text-slate-700"
               >
                 Link to Terms or Privacy Policy
               </label>
@@ -781,12 +738,12 @@ export function DocumentUploadSection({
                 placeholder="https://example.com/terms or https://service.com/privacy"
                 leftIcon={<Link2 className="h-4 w-4" />}
                 className={`h-9 text-xs ${
-                  errors.url ? "border-rose-300 dark:border-rose-800" : ""
+                  errors.url ? "border-rose-300" : ""
                 }`}
               />
 
               {errors.url && (
-                <div className="flex items-center gap-2 text-xs text-rose-600 dark:text-rose-400 mt-1">
+                <div className="flex items-center gap-2 text-xs text-rose-600 mt-1">
                   <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
                   <span>{errors.url}</span>
                 </div>
@@ -794,8 +751,8 @@ export function DocumentUploadSection({
             </div>
 
             {/* Honest URL ingestion notice matching backend contract */}
-            <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-[11px] text-slate-500 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-400 leading-relaxed">
-              <strong className="font-semibold text-slate-700 dark:text-slate-300">
+            <div className="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3 text-[11px] text-slate-500 leading-relaxed">
+              <strong className="font-semibold text-slate-700">
                 URL Ingestion Architecture:
               </strong>{" "}
               Policy links are fetched server-side with strict SSRF defense (blocking private IP ranges, loopbacks, and localhost), a 15-second timeout, and a 10 MB payload limit. If a site requires login or blocks automated fetching, copy and paste the policy text into the Paste Text tab instead.
@@ -804,11 +761,11 @@ export function DocumentUploadSection({
         )}
 
         {/* Document Configuration Inputs: Document Type and App Name */}
-        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 pt-4 border-t border-slate-100">
           <div>
             <label
               htmlFor="document-type-select"
-              className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
+              className="text-[11px] font-medium text-slate-500 block mb-1"
             >
               Document Type
             </label>
@@ -817,7 +774,7 @@ export function DocumentUploadSection({
               name="documentType"
               value={documentType}
               onChange={(e) => setDocumentType(e.target.value as DocumentType)}
-              className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
+              className="w-full h-9 rounded-lg border border-slate-200 bg-white px-3 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-slate-900/10"
             >
               <option value="terms_of_service">Terms of Service</option>
               <option value="privacy_policy">Privacy Policy</option>
@@ -830,7 +787,7 @@ export function DocumentUploadSection({
           <div>
             <label
               htmlFor="app-name-input"
-              className="text-[11px] font-medium text-slate-500 dark:text-slate-400 block mb-1"
+              className="text-[11px] font-medium text-slate-500 block mb-1"
             >
               App or Service Name <span className="text-rose-500">*</span>
             </label>
@@ -844,11 +801,11 @@ export function DocumentUploadSection({
               }}
               placeholder="e.g. Spotify, Instagram, Discord"
               className={`h-9 text-xs ${
-                errors.appName ? "border-rose-300 dark:border-rose-800" : ""
+                errors.appName ? "border-rose-300" : ""
               }`}
             />
             {errors.appName && (
-              <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-1">
+              <p className="text-[11px] text-rose-600 mt-1">
                 {errors.appName}
               </p>
             )}
@@ -857,7 +814,7 @@ export function DocumentUploadSection({
 
         {/* General Error notice if any */}
         {errors.general && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg bg-rose-50 p-2.5 text-xs text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50">
+          <div className="mt-3 flex items-center gap-2 rounded-lg bg-rose-50 p-2.5 text-xs text-rose-700 border border-rose-200">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />
             <span>{errors.general}</span>
           </div>
@@ -865,22 +822,22 @@ export function DocumentUploadSection({
 
         {/* Honest Backend Integration Notice Dialog/Card for custom non-demo submissions */}
         {backendNotice && (
-          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60 space-y-3 animate-in fade-in-50">
+          <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50/80 p-4 space-y-3 animate-in fade-in-50">
             <div className="flex items-start gap-2.5">
               <CheckCircle2 className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-0.5" />
               <div className="space-y-1">
-                <h4 className="text-xs font-semibold text-slate-900 dark:text-slate-100">
+                <h4 className="text-xs font-semibold text-slate-900">
                   {backendNotice.title}
                 </h4>
-                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="text-xs text-slate-600 leading-relaxed">
                   {backendNotice.message}
                 </p>
               </div>
             </div>
 
             {/* Prepared Payload Summary */}
-            <div className="rounded-lg bg-white p-3 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800 text-[11px] font-mono text-slate-600 dark:text-slate-300 space-y-1">
-              <div className="flex items-center gap-1.5 text-slate-400 font-sans font-semibold uppercase text-[10px] pb-1 border-b border-slate-100 dark:border-slate-800">
+            <div className="rounded-lg bg-white p-3 border border-slate-200/80 text-[11px] font-mono text-slate-600 space-y-1">
+              <div className="flex items-center gap-1.5 text-slate-400 font-sans font-semibold uppercase text-[10px] pb-1 border-b border-slate-100">
                 <Terminal className="h-3 w-3" />
                 <span>Validated Payload Schema (Ready for POST /api/analyze):</span>
               </div>
@@ -905,7 +862,7 @@ export function DocumentUploadSection({
                 <Button
                   size="xs"
                   onClick={handleRunSimulation}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium"
+                  className="bg-[#119da4] hover:bg-[#0c7489] text-white font-medium"
                 >
                   Simulate 5-Stage Pipeline
                 </Button>
@@ -919,12 +876,12 @@ export function DocumentUploadSection({
           analysisJob.jobState === "completed" ||
           analysisJob.jobState === "failed" ||
           analysisJob.jobState === "cancelled") && (
-          <div className="mt-5 rounded-xl border border-blue-200/90 bg-gradient-to-b from-blue-50/40 to-white dark:border-blue-900/60 dark:from-slate-900 dark:to-slate-950 p-5 space-y-4 shadow-xs animate-in fade-in-50">
+          <div className="mt-5 rounded-xl border border-[#d7d9ce] bg-white p-5 space-y-4 shadow-xs animate-in fade-in-50">
             {/* Stepper Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-blue-100 dark:border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-[#d7d9ce]">
               <div className="flex items-center gap-2.5">
                 {analysisJob.isProcessing ? (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white shadow-xs">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#119da4] text-white shadow-xs">
                     <Loader2 className="h-4 w-4 animate-spin" />
                   </div>
                 ) : analysisJob.jobState === "completed" ? (
@@ -942,7 +899,7 @@ export function DocumentUploadSection({
                 )}
 
                 <div>
-                  <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-[#040404] flex items-center gap-2">
                     <span>
                       {analysisJob.jobState === "completed"
                         ? "Analysis Complete & Verified"
@@ -955,14 +912,14 @@ export function DocumentUploadSection({
                     <span
                       className={`text-[10px] font-mono font-semibold rounded-full px-2 py-0.5 ${
                         analysisService.isLiveApiEnabled()
-                          ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
-                          : "bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
+                          ? "bg-emerald-100 text-emerald-800 border border-emerald-300"
+                          : "bg-[#d7d9ce]/40 text-[#13505b] border border-[#d7d9ce]"
                       }`}
                     >
                       {analysisService.isLiveApiEnabled() ? "LIVE GEMINI AI" : "DEMO PIPELINE"}
                     </span>
                   </h3>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-slate-500 mt-0.5">
                     {analysisJob.stageMessage || "Executing 5-stage prompt pipeline"}
                   </p>
                 </div>
@@ -976,7 +933,7 @@ export function DocumentUploadSection({
                     variant="outline"
                     size="xs"
                     onClick={() => analysisJob.cancel()}
-                    className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200 dark:border-rose-900"
+                    className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 border-rose-200"
                   >
                     Cancel Analysis
                   </Button>
@@ -987,7 +944,7 @@ export function DocumentUploadSection({
                       type="button"
                       size="sm"
                       rightIcon={<ArrowRight className="h-3.5 w-3.5" />}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium cursor-pointer"
+                      className="bg-[#119da4] hover:bg-[#0c7489] text-white font-medium cursor-pointer"
                     >
                       Open Full Report
                     </Button>
@@ -1001,7 +958,7 @@ export function DocumentUploadSection({
                     variant="ghost"
                     size="xs"
                     onClick={() => analysisJob.reset()}
-                    className="text-slate-500 hover:text-slate-700 dark:text-slate-400"
+                    className="text-slate-500 hover:text-slate-700"
                   >
                     Reset
                   </Button>
@@ -1018,26 +975,26 @@ export function DocumentUploadSection({
                     key={s.stage}
                     className={`flex items-start gap-2.5 rounded-lg border p-2.5 transition-all ${
                       state === "completed"
-                        ? "border-emerald-200 bg-emerald-50/40 dark:border-emerald-900/50 dark:bg-emerald-950/20"
+                        ? "border-emerald-200 bg-emerald-50/40"
                         : state === "active"
-                        ? "border-blue-400 bg-blue-50/70 dark:border-blue-700 dark:bg-blue-950/40 ring-1 ring-blue-400/40"
+                        ? "border-[#119da4] bg-[#119da4]/10 ring-1 ring-[#119da4]/40"
                         : state === "failed"
-                        ? "border-rose-300 bg-rose-50/60 dark:border-rose-900 dark:bg-rose-950/30"
-                        : "border-slate-200/70 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40 opacity-60"
+                        ? "border-rose-300 bg-rose-50/60"
+                        : "border-[#d7d9ce]/70 bg-white/60 opacity-60"
                     }`}
                   >
                     <div className="flex-shrink-0 mt-0.5">
                       {state === "completed" && (
-                        <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                       )}
                       {state === "active" && (
-                        <Loader2 className="h-4 w-4 animate-spin text-blue-600 dark:text-blue-400" />
+                        <Loader2 className="h-4 w-4 animate-spin text-[#119da4]" />
                       )}
                       {state === "failed" && (
-                        <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+                        <AlertCircle className="h-4 w-4 text-rose-600" />
                       )}
                       {state === "pending" && (
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[9px] font-mono font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-300">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-slate-200 text-[9px] font-mono font-semibold text-slate-600">
                           {s.code}
                         </span>
                       )}
@@ -1051,18 +1008,18 @@ export function DocumentUploadSection({
                         <span
                           className={`text-xs font-semibold truncate ${
                             state === "active"
-                              ? "text-blue-700 dark:text-blue-300"
+                              ? "text-[#119da4]"
                               : state === "completed"
-                              ? "text-slate-800 dark:text-slate-200"
+                              ? "text-slate-800"
                               : state === "failed"
-                              ? "text-rose-700 dark:text-rose-300"
-                              : "text-slate-600 dark:text-slate-400"
+                              ? "text-rose-700"
+                              : "text-slate-600"
                           }`}
                         >
                           {s.title}
                         </span>
                       </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                      <p className="text-[11px] text-slate-500 line-clamp-1 mt-0.5">
                         {s.description}
                       </p>
                     </div>
@@ -1073,7 +1030,7 @@ export function DocumentUploadSection({
 
             {/* Failure Alert Banner if any */}
             {analysisJob.jobState === "failed" && analysisJob.error && (
-              <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/40 dark:text-rose-300">
+              <div className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50/80 p-3 text-xs text-rose-700">
                 <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
                 <div className="flex-1">
                   <p className="font-semibold">Pipeline Execution Failed</p>
@@ -1093,7 +1050,7 @@ export function DocumentUploadSection({
 
             {/* Cancelled Notice Banner if any */}
             {analysisJob.jobState === "cancelled" && (
-              <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+              <div className="flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50/80 p-3 text-xs text-amber-800">
                 <div className="flex items-center gap-2">
                   <Info className="h-4 w-4 flex-shrink-0 text-amber-600" />
                   <span>Analysis job was cancelled by user. Background requests aborted.</span>
@@ -1111,9 +1068,9 @@ export function DocumentUploadSection({
 
             {/* Completion Banner */}
             {analysisJob.jobState === "completed" && (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-200">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-lg border border-emerald-200 bg-emerald-50/80 p-3 text-xs text-emerald-900">
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600 dark:text-emerald-400" />
+                  <CheckCircle2 className="h-4 w-4 flex-shrink-0 text-emerald-600" />
                   <span>
                     <strong>Analysis Finished:</strong> 5-stage pipeline passed evidence grounding checks with zero ungrounded claims.
                   </span>
@@ -1135,45 +1092,17 @@ export function DocumentUploadSection({
           </div>
         )}
 
-        {/* Bottom Actions & Popular App Shortcuts */}
-        <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-          <div className="flex items-center gap-2 flex-wrap text-xs text-slate-500">
-            <span className="text-slate-400 font-medium">Demonstration shortcuts:</span>
+        {/* Bottom Actions */}
+        <div className="mt-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-4 border-t border-[#eef1ec]">
+          <div className="flex items-center gap-2 text-xs text-[#4a5759]">
+            <span>Need a quick test?</span>
             <button
               type="button"
-              onClick={() => handleSelectDemoFixture("spotify")}
+              onClick={handleLoadSamplePolicy}
               disabled={analysisJob.isProcessing}
-              className={`rounded-md border px-2.5 py-1 text-[11px] transition-colors disabled:opacity-50 ${
-                activeDemoKey === "spotify"
-                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-300 font-semibold"
-                  : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-300"
-              }`}
+              className="font-medium text-[#119da4] hover:text-[#0c7489] hover:underline disabled:opacity-50"
             >
-              Spotify
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectDemoFixture("instagram")}
-              disabled={analysisJob.isProcessing}
-              className={`rounded-md border px-2.5 py-1 text-[11px] transition-colors disabled:opacity-50 ${
-                activeDemoKey === "instagram"
-                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-300 font-semibold"
-                  : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-300"
-              }`}
-            >
-              Instagram
-            </button>
-            <button
-              type="button"
-              onClick={() => handleSelectDemoFixture("discord")}
-              disabled={analysisJob.isProcessing}
-              className={`rounded-md border px-2.5 py-1 text-[11px] transition-colors disabled:opacity-50 ${
-                activeDemoKey === "discord"
-                  ? "border-blue-600 bg-blue-50 text-blue-700 dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-300 font-semibold"
-                  : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-800/80 dark:text-slate-300"
-              }`}
-            >
-              Discord
+              Load sample agreement (CloudPulse)
             </button>
           </div>
 
@@ -1183,13 +1112,13 @@ export function DocumentUploadSection({
             disabled={analysisJob.isProcessing}
             size="sm"
             rightIcon={<ArrowRight className="h-4 w-4" />}
-            className="font-medium"
+            className="font-medium bg-[#119da4] hover:bg-[#0c7489] text-white shadow-xs"
           >
             {analysisJob.isProcessing
-              ? "Running Pipeline..."
+              ? "Translating Policy..."
               : isSubmitting
-              ? "Validating & Submitting..."
-              : "Analyze Document"}
+              ? "Checking Input..."
+              : "Scan & Explain Policy"}
           </Button>
         </div>
       </CardContent>

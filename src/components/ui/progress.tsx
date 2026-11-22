@@ -17,7 +17,7 @@ export function Progress({
   const percentage = Math.min(Math.max((value / max) * 100, 0), 100);
 
   // Dynamic color determination based on risk score (higher score = more risk)
-  let barColor = "bg-slate-900 dark:bg-slate-100";
+  let barColor = "bg-slate-900";
   if (indicatorColor === "high" || (indicatorColor === "dynamic" && percentage >= 70)) {
     barColor = "bg-rose-500";
   } else if (indicatorColor === "medium" || (indicatorColor === "dynamic" && percentage >= 40)) {
@@ -33,7 +33,7 @@ export function Progress({
       aria-valuemin={0}
       aria-valuemax={max}
       className={cn(
-        "relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800",
+        "relative h-1.5 w-full overflow-hidden rounded-full bg-slate-100",
         className
       )}
       {...props}

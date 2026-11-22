@@ -2,13 +2,11 @@
 
 import * as React from "react";
 import {
-  Moon,
-  Sun,
   Database,
-  Sparkles,
-  ShieldCheck,
   Cpu,
+  ShieldCheck,
   Check,
+  Info,
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -19,105 +17,70 @@ interface SettingsModalProps {
 }
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [isDark, setIsDark] = React.useState(false);
-
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      setIsDark(document.documentElement.classList.contains("dark"));
-    }
-  }, [isOpen]);
-
-  const toggleTheme = () => {
-    const nextDark = !isDark;
-    setIsDark(nextDark);
-    if (nextDark) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-    }
-  };
-
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
       title="Application Settings & System Status"
-      description="Configure preferences and inspect live infrastructure components."
+      description="System intelligence and verified data storage architecture."
       maxWidth="md"
     >
-      <div className="space-y-5 text-xs">
-        {/* Appearance Preference */}
-        <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-900/40 space-y-2.5">
-          <div className="flex items-center justify-between">
-            <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              {isDark ? <Moon className="h-4 w-4 text-blue-400" /> : <Sun className="h-4 w-4 text-amber-500" />}
-              Appearance Theme
-            </span>
-            <Button
-              type="button"
-              variant="outline"
-              size="xs"
-              onClick={toggleTheme}
-              className="text-xs font-medium"
-            >
-              {isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
-            </Button>
-          </div>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
-            Currently active: <strong className="text-slate-700 dark:text-slate-300">{isDark ? "Dark Theme" : "Light Theme"}</strong>
-          </p>
-        </div>
-
-        {/* Infrastructure & Intelligence Status */}
-        <div className="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
-          <h4 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5 text-xs">
-            <Cpu className="h-4 w-4 text-emerald-500" />
-            Active Intelligence & Storage Architecture
+      <div className="space-y-4 text-xs">
+        {/* Active System Details */}
+        <div className="rounded-xl border border-[#d7d9ce] bg-white p-4 space-y-3">
+          <h4 className="font-semibold text-[#040404] flex items-center gap-1.5 text-xs">
+            <Cpu className="h-4 w-4 text-[#119da4]" />
+            Active AI & Database Architecture
           </h4>
 
           <div className="grid grid-cols-1 gap-2 pt-1">
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between rounded-lg bg-[#f7f8f5] p-2.5 border border-[#eef1ec]">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-3.5 w-3.5 text-blue-500" />
-                <span className="text-slate-700 dark:text-slate-300 font-medium">AI Foundation Model</span>
+                <Cpu className="h-3.5 w-3.5 text-[#119da4]" />
+                <span className="text-[#040404] font-medium">AI Foundation Engine</span>
               </div>
-              <span className="font-mono text-[10px] rounded bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 px-2 py-0.5 font-semibold">
+              <span className="font-mono text-[10px] rounded bg-[#eef1ec] text-[#13505b] px-2 py-0.5 font-semibold">
                 Gemini 3.5 Flash-Lite
               </span>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between rounded-lg bg-[#f7f8f5] p-2.5 border border-[#eef1ec]">
               <div className="flex items-center gap-2">
-                <Database className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Database Persistence</span>
+                <Database className="h-3.5 w-3.5 text-[#0c7489]" />
+                <span className="text-[#040404] font-medium">Database Persistence</span>
               </div>
-              <span className="font-mono text-[10px] rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 font-semibold">
+              <span className="font-mono text-[10px] rounded bg-emerald-50 text-emerald-800 border border-emerald-200 px-2 py-0.5 font-semibold">
                 Neon PostgreSQL (Connected)
               </span>
             </div>
 
-            <div className="flex items-center justify-between rounded-lg bg-slate-50 dark:bg-slate-950 p-2 border border-slate-100 dark:border-slate-800">
+            <div className="flex items-center justify-between rounded-lg bg-[#f7f8f5] p-2.5 border border-[#eef1ec]">
               <div className="flex items-center gap-2">
-                <ShieldCheck className="h-3.5 w-3.5 text-indigo-500" />
-                <span className="text-slate-700 dark:text-slate-300 font-medium">Pipeline Verification</span>
+                <ShieldCheck className="h-3.5 w-3.5 text-[#13505b]" />
+                <span className="text-[#040404] font-medium">Evidence Grounding</span>
               </div>
-              <span className="font-mono text-[10px] rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 font-semibold">
-                P01-P05 Exact Quote Match
+              <span className="font-mono text-[10px] rounded bg-[#eef1ec] text-[#13505b] px-2 py-0.5 font-semibold">
+                Word-for-Word Verification
               </span>
             </div>
           </div>
         </div>
 
-        {/* Responsible AI Disclaimer */}
-        <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-3">
-          TermsLens provides consumer-focused policy explanations and plain-language summaries for informational purposes. It does not constitute legal counsel or formal legal advice.
-        </p>
+        {/* Informational Notice */}
+        <div className="rounded-xl border border-[#d7d9ce] bg-[#f7f8f5] p-3 text-[11px] text-[#4a5759] flex items-start gap-2">
+          <Info className="h-4 w-4 text-[#119da4] shrink-0 mt-0.5" />
+          <p className="leading-relaxed">
+            TermsLens translates complicated terms into plain English for informational purposes. It does not provide legal advice.
+          </p>
+        </div>
 
-        {/* Modal Close Action */}
         <div className="flex justify-end pt-2">
-          <Button size="sm" onClick={onClose} className="text-xs font-medium">
+          <Button
+            type="button"
+            size="sm"
+            onClick={onClose}
+            className="bg-[#119da4] hover:bg-[#0c7489] text-white font-medium text-xs px-4"
+          >
             Done
           </Button>
         </div>

@@ -6,9 +6,6 @@ import {
   Copy,
   Check,
   FileCode,
-  Download,
-  FileText,
-  Sparkles,
 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
@@ -31,14 +28,14 @@ export function ExportReportModal({
     return `# TermsLens Analysis Report: ${report.appName} — ${report.documentTitle}
 Analyzed: ${new Date(report.analysisDate).toLocaleDateString()}
 Total Clauses Scanned: ${report.totalClausesAnalyzed}
-High Attention Findings: ${report.highAttentionCount}
-Moderate Attention Findings: ${report.moderateAttentionCount}
-Informational Findings: ${report.informationalCount}
+Things to Watch Out For: ${report.highAttentionCount}
+Notice Items: ${report.moderateAttentionCount}
+Standard Terms: ${report.informationalCount}
 
 ## Document Summary
 ${report.documentSummary}
 
-## Executive Summary
+## The Big Picture (Executive Summary)
 ${report.executiveSummary.documentOverview}
 
 ### Main Obligations
@@ -62,29 +59,36 @@ Original Quote: "${c.evidence.exactQuote}"
   .join("\n")}
 
 ---
-*Notice: TermsLens provides consumer policy explanations and informational summaries, not legal advice.*
+Exported from TermsLens — Clear Policy Explainer for Consumers
 `;
   };
 
-  const handleCopyMarkdown = () => {
-    navigator.clipboard.writeText(generateMarkdown());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopyMarkdown = async () => {
+    try {
+      const text = generateMarkdown();
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy markdown:", err);
+    }
   };
 
   const handleDownloadJson = () => {
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(report, null, 2));
-    const downloadAnchor = document.createElement("a");
-    downloadAnchor.setAttribute("href", dataStr);
-    downloadAnchor.setAttribute(
-      "download",
-      `${report.appName.toLowerCase().replace(/\s+/g, "_")}_termslens_report.json`
-    );
-    document.body.appendChild(downloadAnchor);
-    downloadAnchor.click();
-    downloadAnchor.remove();
+    try {
+      const jsonStr = JSON.stringify(report, null, 2);
+      const blob = new Blob([jsonStr], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `termslens-${report.appName.toLowerCase().replace(/[^a-z0-9]/g, "-")}-report.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download JSON:", err);
+    }
   };
 
   const handlePrint = () => {
@@ -99,31 +103,31 @@ Original Quote: "${c.evidence.exactQuote}"
       description={`Export or share the ${report.appName} policy breakdown.`}
       maxWidth="md"
     >
-      <div className="space-y-4 text-xs sm:text-sm">
-        <p className="text-xs text-slate-500 leading-relaxed">
-          Select an export format below to share or archive this document intelligence breakdown:
+      <div className="space-y-4 text-xs">
+        <p className="text-xs text-[#4a5759]">
+          Select an export format below to share or archive this document breakdown:
         </p>
 
         <div className="space-y-2.5">
-          {/* Option 1: Print / Save as PDF */}
+          {/* Option 1: Print / PDF */}
           <div
             onClick={handlePrint}
-            className="flex items-center justify-between rounded-xl border border-slate-200 p-3.5 hover:border-slate-300 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-800/40 cursor-pointer transition-colors"
+            className="flex items-center justify-between rounded-xl border border-[#d7d9ce] p-3.5 hover:border-[#119da4] hover:bg-[#f7f8f5] cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#eef1ec] text-[#13505b]">
                 <Printer className="h-4 w-4" />
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
+                <h4 className="font-semibold text-[#040404] text-xs">
                   Print or Save as PDF
                 </h4>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[#4a5759]">
                   Formatted printer-friendly document sheet
                 </p>
               </div>
             </div>
-            <Button size="xs" variant="outline">
+            <Button size="xs" variant="outline" className="border-[#d7d9ce]">
               Print
             </Button>
           </div>
@@ -131,26 +135,26 @@ Original Quote: "${c.evidence.exactQuote}"
           {/* Option 2: Copy Markdown */}
           <div
             onClick={handleCopyMarkdown}
-            className="flex items-center justify-between rounded-xl border border-slate-200 p-3.5 hover:border-slate-300 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-800/40 cursor-pointer transition-colors"
+            className="flex items-center justify-between rounded-xl border border-[#d7d9ce] p-3.5 hover:border-[#119da4] hover:bg-[#f7f8f5] cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#eef1ec] text-[#13505b]">
                 {copied ? (
-                  <Check className="h-4 w-4 text-emerald-600" />
+                  <Check className="h-4 w-4 text-[#119da4]" />
                 ) : (
                   <Copy className="h-4 w-4" />
                 )}
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
+                <h4 className="font-semibold text-[#040404] text-xs">
                   Copy Markdown Summary
                 </h4>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[#4a5759]">
                   Formatted for Notion, Obsidian, GitHub, or email
                 </p>
               </div>
             </div>
-            <Button size="xs" variant="outline">
+            <Button size="xs" variant="outline" className="border-[#d7d9ce]">
               {copied ? "Copied!" : "Copy"}
             </Button>
           </div>
@@ -158,28 +162,28 @@ Original Quote: "${c.evidence.exactQuote}"
           {/* Option 3: Download JSON */}
           <div
             onClick={handleDownloadJson}
-            className="flex items-center justify-between rounded-xl border border-slate-200 p-3.5 hover:border-slate-300 hover:bg-slate-50/70 dark:border-slate-800 dark:hover:bg-slate-800/40 cursor-pointer transition-colors"
+            className="flex items-center justify-between rounded-xl border border-[#d7d9ce] p-3.5 hover:border-[#119da4] hover:bg-[#f7f8f5] cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#eef1ec] text-[#13505b]">
                 <FileCode className="h-4 w-4" />
               </div>
               <div>
-                <h4 className="font-semibold text-slate-900 dark:text-slate-100 text-xs">
+                <h4 className="font-semibold text-[#040404] text-xs">
                   Download Structured JSON
                 </h4>
-                <p className="text-[11px] text-slate-500">
+                <p className="text-[11px] text-[#4a5759]">
                   Full programmatic schema with verbatim evidence
                 </p>
               </div>
             </div>
-            <Button size="xs" variant="outline">
+            <Button size="xs" variant="outline" className="border-[#d7d9ce]">
               Download
             </Button>
           </div>
         </div>
 
-        <div className="flex items-center justify-end pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className="flex items-center justify-end pt-3 border-t border-[#eef1ec]">
           <Button size="xs" variant="ghost" onClick={onClose}>
             Close
           </Button>
@@ -188,4 +192,3 @@ Original Quote: "${c.evidence.exactQuote}"
     </Modal>
   );
 }
-

@@ -4,13 +4,10 @@ import * as React from "react";
 import {
   FileText,
   AlertTriangle,
-  HelpCircle,
   Info,
   ShieldAlert,
-  ShieldCheck,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tooltip } from "@/components/ui/tooltip";
 import { AnalysisReport } from "@/types";
 
 interface DocumentOverviewBarProps {
@@ -20,49 +17,45 @@ interface DocumentOverviewBarProps {
 export function DocumentOverviewBar({ report }: DocumentOverviewBarProps) {
   const metricCards = [
     {
-      label: "Total Clauses Analyzed",
+      label: "Total Clauses Scanned",
       value: report.totalClausesAnalyzed,
-      subtext: "Sections scanned in document",
+      subtext: "Sections checked in document",
       icon: FileText,
-      accent: "slate",
-      tooltip: "Total individual legal sections processed by TermsLens parser.",
+      iconBg: "bg-[#eef1ec] text-[#13505b]",
     },
     {
-      label: "High-Attention Findings",
+      label: "Things to Watch Out For",
       value: report.highAttentionCount,
-      subtext: "Binding waivers or broad grants",
+      subtext: "Arbitration or rights waivers",
       icon: ShieldAlert,
-      accent: "rose",
-      tooltip: "Clauses with significant impact on user rights, such as mandatory arbitration or broad data licensing.",
+      iconBg: "bg-rose-50 text-[#c93b2b]",
     },
     {
-      label: "Moderate-Attention Findings",
+      label: "Notice Items",
       value: report.moderateAttentionCount,
-      subtext: "Recurring billing or change terms",
+      subtext: "Auto-renewals or unilateral changes",
       icon: AlertTriangle,
-      accent: "amber",
-      tooltip: "Clauses that require user awareness, such as auto-renewals or cancellation procedures.",
+      iconBg: "bg-amber-50 text-amber-700",
     },
     {
-      label: "Informational Findings",
+      label: "Standard Terms",
       value: report.informationalCount,
-      subtext: "Standard operating provisions",
+      subtext: "Routine operating rules",
       icon: Info,
-      accent: "blue",
-      tooltip: "Routine consumer provisions such as age requirements or general service disclaimers.",
+      iconBg: "bg-[#e5ebe9] text-[#0c7489]",
     },
   ];
 
   return (
     <div className="space-y-4">
       {/* Document Summary Card */}
-      <Card className="border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs">
+      <Card className="border-[#d7d9ce] bg-white shadow-xs">
         <CardContent className="p-5 sm:p-6 space-y-2">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-            <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            <span>Document Overview & Summary</span>
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[#13505b]">
+            <FileText className="h-4 w-4 text-[#119da4]" />
+            <span>The Quick Summary</span>
           </div>
-          <p className="text-sm text-slate-800 dark:text-slate-200 leading-relaxed">
+          <p className="text-sm text-[#040404] leading-relaxed">
             {report.documentSummary}
           </p>
         </CardContent>
@@ -75,56 +68,33 @@ export function DocumentOverviewBar({ report }: DocumentOverviewBarProps) {
           return (
             <Card
               key={idx}
-              className="border-slate-200/90 bg-white dark:border-slate-800 dark:bg-slate-900 transition-all duration-150 hover:border-slate-300 dark:hover:border-slate-700 shadow-xs"
+              className="border-[#d7d9ce] bg-white transition-all duration-150 hover:border-[#119da4] shadow-xs"
             >
               <CardContent className="p-4 sm:p-5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400">
-                    <span>{metric.label}</span>
-                    <Tooltip content={metric.tooltip}>
-                      <HelpCircle className="h-3 w-3 cursor-pointer text-slate-400 hover:text-slate-600" />
-                    </Tooltip>
-                  </div>
+                  <span className="text-xs font-medium text-[#4a5759]">
+                    {metric.label}
+                  </span>
                   <div
-                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                      metric.accent === "rose"
-                        ? "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
-                        : metric.accent === "amber"
-                        ? "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
-                        : metric.accent === "blue"
-                        ? "bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300"
-                    }`}
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${metric.iconBg}`}
                   >
                     <Icon className="h-4 w-4" />
                   </div>
                 </div>
 
-                <div className="mt-2.5 font-mono text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                  {metric.value}
+                <div className="mt-3">
+                  <div className="text-2xl font-bold tracking-tight text-[#040404]">
+                    {metric.value}
+                  </div>
+                  <p className="mt-1 text-[11px] text-[#4a5759]">
+                    {metric.subtext}
+                  </p>
                 </div>
-
-                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 truncate">
-                  {metric.subtext}
-                </p>
               </CardContent>
             </Card>
           );
         })}
       </div>
-
-      {/* Mandatory Regulatory Assessment Principle Notice */}
-      <div className="flex items-start gap-2.5 rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400">
-        <Info className="h-4 w-4 shrink-0 text-slate-500 mt-0.5" />
-        <p className="leading-relaxed">
-          <strong className="font-semibold text-slate-800 dark:text-slate-200">
-            Responsible AI Notice:
-          </strong>{" "}
-          TermsLens organizes and clarifies contractual agreements for consumer awareness.
-          Findings indicate relative attention levels; TermsLens never designates any document as legally safe or unsafe. Always consult official documentation for legal advice.
-        </p>
-      </div>
     </div>
   );
 }
-

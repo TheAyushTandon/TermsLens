@@ -36,7 +36,7 @@ export function AppLayout({
 
   const sectionLabels: Record<string, string> = {
     dashboard: "Dashboard",
-    analyze: "Analyze Document",
+    analyze: "Scan Policy",
     reports: "My Reports",
     settings: "Settings",
   };
@@ -44,7 +44,7 @@ export function AppLayout({
   const activeBreadcrumb = sectionLabels[activeSection] || "Dashboard";
 
   return (
-    <div className="flex min-h-screen bg-[#FBFBFD] dark:bg-[#090D16]">
+    <div className="flex min-h-screen bg-[#F7F8F5] text-[#040404]">
       {/* Sidebar navigation */}
       <Sidebar
         user={user}

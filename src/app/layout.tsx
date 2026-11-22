@@ -1,21 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Ubuntu } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const ubuntu = Ubuntu({
+  weight: ["300", "400", "500", "700"],
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-ubuntu",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
-  title: "TermsLens | Understand what you're agreeing to",
+  title: "TermsLens | Clear, Simple Policy Explanations",
   description:
-    "An AI-powered Terms & Conditions and Privacy Policy explainer for everyday users. Break down complex policies into simple explanations, important clauses, and potential red flags.",
+    "Understand contracts before you agree. TermsLens translates terms of service and privacy policies into simple, plain English with exact quotes.",
 };
 
 export default function RootLayout({
@@ -24,11 +21,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col font-sans bg-[#FBFBFD] text-[#090D16] dark:bg-[#090D16] dark:text-[#F8FAFC]">
+    <html lang="en" className={`${ubuntu.variable} h-full antialiased`}>
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="min-h-full flex flex-col font-sans bg-[#F7F8F5] text-[#040404]">
         {children}
       </body>
     </html>

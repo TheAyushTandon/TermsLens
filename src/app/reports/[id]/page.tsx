@@ -26,10 +26,10 @@ export default function ReportPage(props: PageProps) {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center bg-[#FBFBFD] dark:bg-[#090D16]">
+        <div className="flex min-h-screen items-center justify-center bg-[#f7f8f5]">
           <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-2 border-slate-900 border-t-transparent dark:border-white dark:border-t-transparent" />
-            <p className="text-xs font-medium text-slate-500">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-[#119da4] border-t-transparent" />
+            <p className="text-xs font-medium text-[#13505b]">
               Loading TermsLens Report...
             </p>
           </div>
