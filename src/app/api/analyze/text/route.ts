@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server.js";
+import { NextResponse, after } from "next/server.js";
 import { jobStore } from "../../../../lib/job-store.ts";
 import { isQueueConfigured, enqueueAnalysisJob } from "../../../../lib/queue.ts";
 import { validatePolicyInput } from "../../../../lib/segmentation.ts";
@@ -6,11 +6,14 @@ import {
   executeTextAnalysisJob,
   activeJobPromises,
 } from "../../../../services/analysis-job-runner.ts";
+import { processAnalysisJob } from "../../../../workers/analysis-worker.ts";
 import type {
   DocumentType,
   SubmitAnalysisResponse,
   ApiErrorResponse,
 } from "../../../../types/index.ts";
+
+export const maxDuration = 60;
 
 export async function POST(request: Request) {
   try {
@@ -111,6 +114,18 @@ export async function POST(request: Request) {
     // 2. Dispatch via durable queue if configured; otherwise use in-process runner for local/test runs
     if (isQueueConfigured()) {
       await enqueueAnalysisJob({ jobId, reportId });
+
+      // In serverless environments (e.g. Vercel), schedule asynchronous execution
+      // using Next.js after() to process the pipeline within the function lifecycle.
+      if (process.env.VERCEL || process.env.ENABLE_SERVERLESS_WORKER === "true") {
+        try {
+          after(async () => {
+            await processAnalysisJob({ jobId, reportId });
+          });
+        } catch {
+          // Ignored outside Next.js request scope
+        }
+      }
     } else {
       const jobPromise = executeTextAnalysisJob({
         jobId,
