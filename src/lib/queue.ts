@@ -48,6 +48,11 @@ export async function getBoss(): Promise<PgBoss> {
     });
 
     await boss.start();
+    try {
+      await boss.createQueue(POLICY_ANALYSIS_QUEUE);
+    } catch {
+      // Queue already exists or concurrent creation
+    }
     bossInstance = boss;
     return bossInstance;
   } finally {

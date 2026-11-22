@@ -7,8 +7,8 @@
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
-    "worker": "node --experimental-strip-types src/workers/analysis-worker.ts",
-    "migrate": "node --experimental-strip-types scripts/migrate.ts",
+    "worker": "node --env-file-if-exists=.env.local --experimental-strip-types src/workers/analysis-worker.ts",
+    "migrate": "node --env-file-if-exists=.env.local --experimental-strip-types scripts/migrate.ts",
     "test": "node --experimental-strip-types tests/evidence-consistency.test.ts && node --experimental-strip-types tests/api-integration.test.ts && node --experimental-strip-types tests/p01-clause-extraction.test.ts && node --experimental-strip-types tests/p02-plain-language.test.ts && node --experimental-strip-types tests/p03-risk-privacy-analysis.test.ts && node --experimental-strip-types tests/p04-evidence-verification.test.ts && node --experimental-strip-types tests/p05-final-report-generation.test.ts && node --experimental-strip-types tests/text-analysis-pipeline-integration.test.ts && node --experimental-strip-types tests/file-upload-pipeline-integration.test.ts && node --experimental-strip-types tests/url-analysis-pipeline-integration.test.ts && node --experimental-strip-types tests/gemini-reliability.test.ts && node --experimental-strip-types tests/persistence-postgres.test.ts && node --experimental-strip-types tests/queue-worker-lifecycle.test.ts",
     "test:gemini:reliability": "node --experimental-strip-types tests/gemini-reliability.test.ts",
     "test:gemini:live": "node --experimental-strip-types tests/gemini-live-availability.test.ts",
@@ -29,6 +29,8 @@
     "test:api:url": "node --experimental-strip-types tests/url-analysis-pipeline-integration.test.ts"
   },
   "dependencies": {
+    "@neon/config": "^1.14.6",
+    "@neon/env": "^2.1.9",
     "@opentelemetry/api": "^1.10.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
