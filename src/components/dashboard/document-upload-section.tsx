@@ -178,10 +178,15 @@ export function DocumentUploadSection({
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const router = useRouter();
   const analysisJob = useAnalysisJob();
+  const reportedReportIdRef = React.useRef<string | null>(null);
 
   // Synchronize completed report to the dashboard
   React.useEffect(() => {
     if (analysisJob.jobState === "completed" && analysisJob.report) {
+      if (reportedReportIdRef.current === analysisJob.report.id) {
+        return;
+      }
+      reportedReportIdRef.current = analysisJob.report.id;
       const rep = analysisJob.report;
       const convertedAnalysis: DocumentAnalysis = {
         id: rep.id,

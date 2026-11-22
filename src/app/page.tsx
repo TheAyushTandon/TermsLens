@@ -117,21 +117,24 @@ export default function DashboardPage() {
     handleNavigateToSection("reports");
   };
 
-  const handleAnalysisCreated = (newDoc: DocumentAnalysis) => {
+  const handleAnalysisCreated = React.useCallback((newDoc: DocumentAnalysis) => {
     setDocuments((prev) => {
-      const filtered = prev.filter((d) => d.id !== newDoc.id);
-      return [newDoc, ...filtered];
-    });
-    if (stats) {
-      setStats({
-        ...stats,
-        documentsAnalyzed: stats.documentsAnalyzed + 1,
-        clausesRequiringAttention: stats.clausesRequiringAttention + newDoc.flaggedClausesCount,
-        privacyRelatedFindings: (stats.privacyRelatedFindings || 0) + (newDoc.privacyFindingsCount || 0),
-        readingTimeSavedMinutes: stats.readingTimeSavedMinutes + newDoc.timeSavedMinutes,
+      if (prev.some((d) => d.id === newDoc.id)) {
+        return prev;
+      }
+      setStats((prevStats) => {
+        if (!prevStats) return prevStats;
+        return {
+          ...prevStats,
+          documentsAnalyzed: prevStats.documentsAnalyzed + 1,
+          clausesRequiringAttention: prevStats.clausesRequiringAttention + newDoc.flaggedClausesCount,
+          privacyRelatedFindings: (prevStats.privacyRelatedFindings || 0) + (newDoc.privacyFindingsCount || 0),
+          readingTimeSavedMinutes: prevStats.readingTimeSavedMinutes + newDoc.timeSavedMinutes,
+        };
       });
-    }
-  };
+      return [newDoc, ...prev];
+    });
+  }, []);
 
   const handleOpenDocument = (doc: DocumentAnalysis) => {
     setSelectedDocument(doc);
